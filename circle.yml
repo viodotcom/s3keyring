@@ -1,0 +1,10 @@
+test:
+  pre:
+      - pip install -r requirements-dev.txt
+checkout:
+  post:
+    - git submodule sync
+    - git submodule update --init
+machine:
+  python:
+    version: 3.4.2
