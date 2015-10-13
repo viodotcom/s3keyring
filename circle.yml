@@ -1,6 +1,8 @@
 test:
   pre:
       - pip install -r requirements-dev.txt
+      - aws configure set profile.circleci.region eu-west-1
+      - aws configure set profile.circleci.s3.signature_version s3v4
 checkout:
   post:
     - git submodule sync
