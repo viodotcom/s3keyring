@@ -2,7 +2,7 @@
 """Keeps your secrets safe in S3"""
 
 from s3keyring import metadata
-from configparser import ConfigParser
+import configparser
 import shutil
 import os
 import inspect
@@ -31,7 +31,7 @@ def __get_config():
     if not os.path.isfile(__user_config_file__):
         __initialize_config()
 
-    cp = ConfigParser()
+    cp = configparser.ConfigParser()
     cp.read(__user_config_file__)
     return cp
 

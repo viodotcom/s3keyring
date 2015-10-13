@@ -6,14 +6,12 @@ import os
 import base64
 import boto3
 import uuid
-import configparser
+import s3keyring
+from configparser import NoOptionError, NoSectionError, ConfigParser
 
 from keyring.errors import (PasswordDeleteError, InitError)
 from keyring.backend import KeyringBackend
 from keyring.util.escape import escape as escape_for_s3
-
-
-AWS_CONFIG_FILE = os.path.join(os.path.expanduser('~'), '.aws', 'config')
 
 
 class PasswordGetError(Exception):
@@ -49,8 +47,7 @@ class S3Backed(object):
     @property
     def kms_key_id(self):
         if self.__kms_key_id is None:
-            self.__kms_key_id = os.environ.get('AWS_KMS_KEY_ID') or \
-                self._get_profile_default(self.profile, 'kms_key_id')
+            self.__kms_key_id = _get_config('aws', 'kms_key_id')
         return self.__kms_key_id
 
     @property
@@ -62,14 +59,13 @@ class S3Backed(object):
     @property
     def region(self):
         if self.__region is None:
-            self.__region = os.environ.get('AWS_DEFAULT_REGION') or \
-                self._get_profile_default(self.profile, 'region')
+            self.__region = s3keyring.read_config('aws', 'region')
         return self.__region
 
     @property
     def profile(self):
         if self.__profile is None:
-            self.__profile = os.environ.get('AWS_PROFILE') or 'default'
+            self.__profile = _get_config('aws', 'profile')
         return self.__profile
 
     @property
@@ -83,12 +79,6 @@ class S3Backed(object):
         return self.__s3
 
     @property
-    def config(self):
-        cfg = configparser.ConfigParser()
-        cfg.read(AWS_CONFIG_FILE)
-        return cfg
-
-    @property
     def namespace(self):
         """Namespaces allow you to have multiple keyrings backed by the same
         S3 bucket by separating them with different S3 prefixes. Different
@@ -96,8 +86,8 @@ class S3Backed(object):
         only the right IAM roles/users/groups have access to a keychain
         namespace"""
         if self.__namespace is None:
-            self.__namespace = escape_for_s3(
-                os.environ.get('S3_KEYRING_NAMESPACE', 'default'))
+            self.__namespace = escape_for_s3(_get_config(
+                'aws', 'keyring_namespace'))
         return self.__namespace
 
     def _find_bucket(self):
@@ -196,3 +186,135 @@ class S3Keyring(S3Backed, KeyringBackend):
                                        prefix=prefix)
         else:
             objects[0].delete()
+
+
+def _get_config(section, option, throw=True):
+    """Gets a configuration option or throws exception if not configured"""
+    try:
+        return s3keyring.read_config(section, option)
+    except (NoOptionError, NoSectionError):
+        if throw:
+            raise InitError("You need to run: s3keyring configure")
+
+
+def configure(ask=True):
+    """Configures the keyring, requesting user input if necessary"""
+    profile = _get_profile(ask=ask)
+    if profile is None:
+        profile_str = ''
+    else:
+        profile_str = profile
+    s3keyring.write_config('aws', 'profile', profile_str)
+
+    (key_id, secret_key) = _get_aws_key(profile, ask=ask)
+    s3keyring.write_config('aws', 'access_key_id', key_id)
+    s3keyring.write_config('aws', 'secret_access_key', secret_key)
+
+    region = _get_region(profile, ask=ask)
+    s3keyring.write_config('aws', 'region', region)
+
+    kms_key_id = _get_kms_key_id(ask=ask)
+    s3keyring.write_config('aws', 'kms_key_id', kms_key_id)
+
+
+def _get_profile(ask=True):
+    """Gets the AWS profile to use with s3keyring, if applicable"""
+    aws_creds = _get_aws_credentials()
+    if aws_creds is None:
+        # The AWS CLI is not configured: profile is N/A
+        return
+    profile = _get_config('aws', 'profile', throw=False)
+    if profile is None:
+        profile = os.environ.get('AWS_PROFILE')
+    if profile is None:
+        # Last resort, use the only profile in .aws/credentials
+        cfg = _get_aws_credentials()
+        if len(cfg.sections()) == 1:
+            profile = cfg.sections()[0]
+
+    resp = ''
+    if ask:
+        resp = input("AWS Profile to use [{}] : ".format(profile))
+    if profile is None or len(resp) > 0:
+        return resp
+
+    return profile
+
+
+def _get_aws_key(self, profile=None, ask=True):
+    if profile is None:
+        # We need to ask
+        key_id = s3keyring.read_config('aws', 'access_key_id')
+        if key_id == '':
+            key_id = os.environ.get('AWS_ACCESS_KEY_ID', '')
+
+        key_id_str = ''
+        if len(key_id) > 0:
+            key_id_str = '*'*(len(key_id) - 4) + key_id[-4:]
+        if ask:
+            tmp = input("AWS Access Key Id [{}]: ".format(key_id_str))
+            if len(tmp) > 0:
+                key_id = tmp
+        secret_key = s3keyring.read_config('aws', 'secret_access_key')
+        if secret_key == '':
+            secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
+
+        secret_key_str = ''
+        if len(secret_key) > 0:
+            secret_key_str = '*'*(len(secret_key) - 4) + secret_key[-4:]
+        if ask:
+            tmp = input("AWS Secret Access Key [{}]: ".format(secret_key_str))
+            if len(tmp) > 0:
+                secret_key = tmp
+    else:
+        cfg = _get_aws_credentials()
+        key_id = cfg.get(profile, 'aws_access_key_id')
+        secret_key = cfg.get(profile, 'aws_secret_access_key')
+
+    return (key_id, secret_key)
+
+
+def _get_region(profile=None, ask=True):
+    if profile is None:
+        region = s3keyring.read_config('aws', 'region')
+        if region == '':
+            region = os.environ.get('AWS_DEFAULT_REGION', '')
+    else:
+        cfg = _get_aws_config()
+        region = cfg.get(profile, 'region')
+
+    if ask:
+        resp = input("AWS region [{}]: ".format(region))
+        if len(resp) > 0:
+            return resp
+
+    return region
+
+
+def _get_kms_key_id(ask=True):
+    kms_key_id = s3keyring.read_config('aws', 'kms_key_id')
+    if kms_key_id == '':
+        kms_key_id = os.environ.get('AWS_KMS_KEY_ID', '')
+
+    if ask:
+        resp = input("KMS Key Id [{}]: ".format(kms_key_id))
+        if len(resp) > 0:
+            return resp
+
+    return kms_key_id
+
+
+def _get_aws_config():
+    cfg = ConfigParser()
+    cfg_file = os.path.join(os.path.expanduser('~'), '.aws', 'config')
+    if os.path.isfile(cfg_file):
+        cfg.read(cfg_file)
+        return cfg
+
+
+def _get_aws_credentials():
+    cfg = ConfigParser()
+    cfg_file = os.path.join(os.path.expanduser('~'), '.aws', 'credentials')
+    if os.path.isfile(cfg_file):
+        cfg.read(cfg_file)
+        return cfg
