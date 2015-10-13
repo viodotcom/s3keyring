@@ -18,7 +18,7 @@ finely tuned using AWS IAM policies.
 
 
 Installation
-===
+------------
 
 Run in a terminal::
 
@@ -26,7 +26,7 @@ Run in a terminal::
 
 
 Prerequisites
-===
+------------
 
 
 S3 bucket
@@ -63,7 +63,7 @@ the `s3keyring` module.
 
 
 Configuration
-===
+-------------
 
 If you haven't done so already, you will need to configure your local
 installation of the AWS SDK by running::
@@ -78,5 +78,6 @@ Then you can simply run::
 
 
 Who do I ask?
-========
+-------------
+
 * German Gomez-Herrero, <german@innovativetravel.eu>
