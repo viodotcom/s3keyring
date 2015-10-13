@@ -253,6 +253,7 @@ setup_dict = dict(
         'Topic :: System :: Software Distribution',
     ],
     packages=find_packages(exclude=(TESTS_DIRECTORY,)),
+    include_package_data=True,
     install_requires=[
         'click>=5.1',
         'future',
