@@ -79,6 +79,27 @@ Then you can simply run::
 
 
 
+Automatic Deployments
+--------------------
+
+You can configure the ``s3keyring`` module completely automatically by setting
+the following environment variables in the deployment target:
+
+* ``AWS_PROFILE``: The name of the AWS SDK profile that the keyring will use.
+* ``AWS_ACCESS_KEY_ID``: Not needed if you specified an ``AWS_PROFILE``.
+* ``AWS_SECRET_ACCESS_KEY``: Not needed if you specified an ``AWS_PROFILE``.
+* ``KEYRING_BUCKET``: The name of the bucket that will hold the keyring data.
+* ``KEYRING_NAMESPACE``: The root S3 prefix for the keyring data. If not
+  specified, keyring data will be stored under ``s3://$KEYRING_BUCKET/default``
+* ``KMS_KEY_ID``: The ID of the KMS key used to encrypt the keyring secrets.
+
+If these environment variables are properly set then you can configure the
+``s3keyring`` module automatically using::
+
+    s3keyring configure --no-ask
+
+
+
 Who do I ask?
 -------------
 
