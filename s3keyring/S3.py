@@ -206,7 +206,8 @@ def configure(ask=True):
         profile_str = profile
     s3keyring.write_config('aws', 'profile', profile_str)
 
-    (key_id, secret_key) = _get_aws_key(profile, ask=ask)
+    key_id = _get_aws_key('aws_access_key_id', profile, ask=ask)
+    secret_key = _get_aws_key('aws_secret_access_key', profile, ask=ask)
     s3keyring.write_config('aws', 'access_key_id', key_id)
     s3keyring.write_config('aws', 'secret_access_key', secret_key)
 
@@ -241,37 +242,40 @@ def _get_profile(ask=True):
     return profile
 
 
-def _get_aws_key(self, profile=None, ask=True):
+def _get_aws_key(keyname, profile=None, ask=True):
     if profile is None:
         # We need to ask
-        key_id = s3keyring.read_config('aws', 'access_key_id')
-        if key_id == '':
-            key_id = os.environ.get('AWS_ACCESS_KEY_ID', '')
-
-        key_id_str = ''
-        if len(key_id) > 0:
-            key_id_str = '*'*(len(key_id) - 4) + key_id[-4:]
+        key = _guess_aws_key(keyname)
         if ask:
-            tmp = input("AWS Access Key Id [{}]: ".format(key_id_str))
+            tmp = input("AWS {keytitle} [{maskedkey}]: ".format(
+                keytitle=keyname.replace('_', ' ').title(),
+                maskedkey=_mask_key(key)))
             if len(tmp) > 0:
-                key_id = tmp
-        secret_key = s3keyring.read_config('aws', 'secret_access_key')
-        if secret_key == '':
-            secret_key = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
-
-        secret_key_str = ''
-        if len(secret_key) > 0:
-            secret_key_str = '*'*(len(secret_key) - 4) + secret_key[-4:]
-        if ask:
-            tmp = input("AWS Secret Access Key [{}]: ".format(secret_key_str))
-            if len(tmp) > 0:
-                secret_key = tmp
+                # User wants to change the key
+                key = tmp
     else:
-        cfg = _get_aws_credentials()
-        key_id = cfg.get(profile, 'aws_access_key_id')
-        secret_key = cfg.get(profile, 'aws_secret_access_key')
+        key = _get_aws_profile_key(keyname, profile)
 
-    return (key_id, secret_key)
+    return key
+
+
+def _guess_aws_key(keyname):
+    key = s3keyring.read_config('aws', keyname.lower())
+    if key == '':
+        key = os.environ.get(keyname.upper(), '')
+    return key
+
+
+def _get_aws_profile_key(keyname, profile):
+    cfg = _get_aws_credentials()
+    return cfg.get(profile, keyname)
+
+
+def _mask_key(key):
+    if len(key) == 0:
+        return key
+    else:
+        return '*'*(len(key) - 4) + key[-4:]
 
 
 def _get_region(profile=None, ask=True):
