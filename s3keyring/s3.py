@@ -220,6 +220,9 @@ def configure(ask=True):
 
 def _get_profile(ask=True):
     """Gets the AWS profile to use with s3keyring, if applicable"""
+    profile = os.environ.get('AWS_PROFILE', None)
+    if profile:
+        return profile
     aws_creds = _get_aws_credentials()
     if aws_creds is None:
         # The AWS CLI is not configured: profile is N/A
@@ -281,11 +284,16 @@ def _mask_key(key):
 def _get_region(profile=None, ask=True):
     if profile is None:
         region = s3keyring.read_config('aws', 'region')
-        if region == '':
-            region = os.environ.get('AWS_DEFAULT_REGION', '')
     else:
         cfg = _get_aws_config()
-        region = cfg.get(profile, 'region')
+        if cfg and profile in cfg.sections() and \
+                'region' in cfg.options(profile):
+            region = cfg.get(profile, 'region')
+        else:
+            region = ''
+
+    if region == '':
+        region = os.environ.get('AWS_REGION', '')
 
     if ask:
         resp = input("AWS region [{}]: ".format(region))
