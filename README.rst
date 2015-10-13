@@ -51,6 +51,8 @@ to attach the following `IAM policy`_ to your AWS user account::
         "Version": "2012-10-17"
     }
 
+.. _IAM policy: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
+
 
 Encryption key
 ~~~~~~~~~~~~~~
