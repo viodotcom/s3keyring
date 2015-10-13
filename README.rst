@@ -36,20 +36,30 @@ The S3 keyring backend requires you to have read/write access to a S3 bucket.
 If you want to use bucket `mysecretbucket` to store your keyring, you will need
 to attach the following `IAM policy`_ to your AWS user account::
 
-    {
-        "Statement": [
-            {
-                "Resource": [
-                    "arn:aws:s3:::mysecretbucket"
-                ],
-                "Action": [
-                    "s3:*"
-                ],
-                "Effect": "Allow"
-            }
-        ],
-        "Version": "2012-10-17"
-    }
+{
+    "Statement": [
+        {
+            "Action": [
+                "s3:*"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::mysecretbucket"
+            ]
+        },
+        {
+            "Action": [
+                "s3:GetBucketLocation",
+                "s3:ListAllMyBuckets"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::*"
+            ]
+        }
+    ],
+    "Version": "2012-10-17"
+}
 
 .. _IAM policy: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
 
