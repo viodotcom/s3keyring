@@ -3,11 +3,11 @@
 
 from keyring.tests.test_backend import BackendBasicTests
 from keyring.tests.py30compat import unittest
-from s3keyring import S3
+from s3keyring import s3
 
 
-@unittest.skipUnless(S3.supported(),
+@unittest.skipUnless(s3.supported(),
                      "You need to configure the AWS credentials")
 class S3PlaintextKeychainTestCase(BackendBasicTests, unittest.TestCase):
     def init_keyring(self):
-        return S3.S3Keyring()
+        return s3.S3Keyring()

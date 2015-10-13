@@ -5,7 +5,7 @@
 from __future__ import print_function
 
 import click
-import s3keyring.S3
+import s3keyring.s3
 
 
 @click.group(name='s3keyring')
@@ -21,7 +21,7 @@ def configure(ask):
     """Configure the S3 backend"""
     # If the user specifies an AWS CLI profile, then just read we can from the
     # ~/.aws/credentials and ~/.aws/config files
-    s3keyring.S3.configure(ask=ask)
+    s3keyring.s3.configure(ask=ask)
 
 
 if __name__ == '__main__':
