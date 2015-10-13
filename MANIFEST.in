@@ -18,6 +18,3 @@ include requirements-dev.txt
 include requirements.txt
 include setup.py
 include tox.ini
-
-# Required to configure s3keyring
-include s3keyring.ini

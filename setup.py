@@ -254,6 +254,8 @@ setup_dict = dict(
     ],
     packages=find_packages(exclude=(TESTS_DIRECTORY,)),
     include_package_data=True,
+    # Include the s3keyring.ini file in the package root dir
+    package_data = {'': ['*.ini']},
     install_requires=[
         'click>=5.1',
         'future',

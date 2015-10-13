@@ -14,8 +14,7 @@ __license__ = metadata.license
 __copyright__ = metadata.copyright
 
 __dir__ = os.path.dirname(inspect.getfile(inspect.currentframe()))
-__default_config_file__ = os.path.join(__dir__, '..',
-                                       's3keyring.ini')
+__default_config_file__ = os.path.join(__dir__, 's3keyring.ini')
 __user_config_file__ = os.path.join(os.path.expanduser('~'),
                                     '.s3keyring.ini')
 
