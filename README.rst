@@ -59,7 +59,7 @@ Encryption key
 
 You will also need to create a `KMS encryption key`_. Write down the ID of the
 KMS key that you create because you will need it later when you configure
-the `s3keyring` module.
+the ``s3keyring`` module.
 
 .. _KMS encryption key: http://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
 
