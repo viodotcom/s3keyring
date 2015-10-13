@@ -12,9 +12,9 @@ rest. This backend is quite handy when you want to distribute credentials across
 multiple machines. Access to the backend and to the encryption keys can be
 finely tuned using AWS IAM policies.
 
-_AWS S3: https://aws.amazon.com/s3/
-_keyring: https://pypi.python.org/pypi/keyring
-_Key Management System: https://aws.amazon.com/kms/
+.. _AWS S3: https://aws.amazon.com/s3/
+.. _keyring: https://pypi.python.org/pypi/keyring
+.. _Key Management System: https://aws.amazon.com/kms/
 
 
 Installation
@@ -59,7 +59,7 @@ You will also need to create a `KMS encryption key`_. Write down the ID of the
 KMS key that you create because you will need it later when you configure
 the `s3keyring` module.
 
-_KMS encryption key: http://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
+.. _KMS encryption key: http://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
 
 
 Configuration
