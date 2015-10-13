@@ -24,5 +24,33 @@ def configure(ask):
     s3keyring.s3.configure(ask=ask)
 
 
+@main.command()
+@click.argument('service')
+@click.argument('username')
+def get(service, username):
+    """Gets a password for a service/username"""
+    kr = s3keyring.s3.S3Keyring()
+    click.echo(kr.get_password(service, username))
+
+
+@main.command()
+@click.argument('service')
+@click.argument('username')
+@click.argument('password')
+def set(service, username, password):
+    """Sets a password for a service/username"""
+    kr = s3keyring.s3.S3Keyring()
+    click.echo(kr.set_password(service, username, password))
+
+
+@main.command()
+@click.argument('service')
+@click.argument('username')
+def delete(service, username):
+    """Deletes a password for a service/username"""
+    kr = s3keyring.s3.S3Keyring()
+    click.echo(kr.delete_password(service, username))
+
+
 if __name__ == '__main__':
     main()
