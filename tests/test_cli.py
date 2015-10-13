@@ -8,7 +8,7 @@ import pytest
 from s3keyring import cli
 import uuid
 from click.testing import CliRunner
-from s3keyring.s3 import S3Keyring, configure
+from s3keyring.s3 import S3Keyring, configure, supported
 from keyring.errors import PasswordDeleteError
 parametrize = pytest.mark.parametrize
 
@@ -39,12 +39,17 @@ def random_entry(keyring, scope='function'):
             raise
 
 
+@parametrize('helparg', ['--help'])
+def test_help(helparg, capsys, cli_runner):
+    result = cli_runner.invoke(cli.main, [helparg])
+    assert result.exit_code == 0
+    assert 's3keyring' in result.output
+
+
 class TestCli(object):
-    @parametrize('helparg', ['--help'])
-    def test_help(self, helparg, capsys, cli_runner):
-        result = cli_runner.invoke(cli.main, [helparg])
-        assert result.exit_code == 0
-        assert 's3keyring' in result.output
+    pytestmark = pytest.mark.skipif(
+        not supported(), reason="S3 backend has not been configured in this "
+                                "system")
 
     def test_configure_no_ask(self, cli_runner):
         result = cli_runner.invoke(cli.configure, ['--no-ask'])
