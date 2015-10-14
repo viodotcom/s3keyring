@@ -43,6 +43,13 @@ class S3Backed(object):
         self.__region = region
         self.__profile = profile
         self.__kms_key_id = kms_key_id
+        self.__session = None
+
+    @property
+    def session(self):
+        if self.__session is None:
+            self.__session = Session(region_name=self.region)
+        return self.__session
 
     @property
     def kms_key_id(self):
