@@ -10,7 +10,28 @@ import s3keyring
 from configparser import NoOptionError, NoSectionError
 from keyring.errors import (PasswordDeleteError, InitError)
 from keyring.backend import KeyringBackend
-from keyring.util.escape import escape as escape_for_s3
+from boto3.session import Session
+import string
+import sys
+
+
+PY3 = sys.version_info[0] == 3
+
+# allow use of unicode literals
+if PY3:
+    def _unichr(c):
+        return chr(c)
+else:
+    def _unichr(c):
+        return unichr(c)
+
+
+LEGAL_CHARS = (
+    getattr(string, 'letters', None)     # Python 2.x
+    or getattr(string, 'ascii_letters')  # Python 3.x
+    ) + string.digits + '/_-'
+
+ESCAPE_FMT = "_{}02X"
 
 
 class PasswordGetError(Exception):
@@ -97,8 +118,8 @@ class S3Backed(object):
         only the right IAM roles/users/groups have access to a keychain
         namespace"""
         if self.__namespace is None:
-            self.__namespace = escape_for_s3(_get_config('aws',
-                                                         'keyring_namespace'))
+            self.__namespace = _escape_for_s3(_get_config('aws',
+                                                          'keyring_namespace'))
 
         return self.__namespace
 
@@ -150,8 +171,8 @@ class S3Keyring(S3Backed, KeyringBackend):
     def get_password(self, service, username):
         """Read the password from the S3 bucket.
         """
-        service = escape_for_s3(service)
-        username = escape_for_s3(username)
+        service = _escape_for_s3(service)
+        username = _escape_for_s3(username)
 
         # Read the password from S3
         prefix = self._get_s3_key(service, username)
@@ -170,8 +191,8 @@ class S3Keyring(S3Backed, KeyringBackend):
     def set_password(self, service, username, password):
         """Write the password in the S3 bucket.
         """
-        service = escape_for_s3(service)
-        username = escape_for_s3(username)
+        service = _escape_for_s3(service)
+        username = _escape_for_s3(username)
 
         pwd_base64 = base64.encodestring(password.encode('utf-8')).decode()
 
@@ -184,8 +205,8 @@ class S3Keyring(S3Backed, KeyringBackend):
     def delete_password(self, service, username):
         """Delete the password for the username of the service.
         """
-        service = escape_for_s3(service)
-        username = escape_for_s3(username)
+        service = _escape_for_s3(service)
+        username = _escape_for_s3(username)
         prefix = self._get_s3_key(service, username)
         objects = list(self.bucket.objects.filter(Prefix=prefix))
         if len(objects) == 0:
@@ -198,6 +219,16 @@ class S3Keyring(S3Backed, KeyringBackend):
                                        prefix=prefix)
         else:
             objects[0].delete()
+
+
+def _escape_char(c):
+    if isinstance(c, int):
+        c = _unichr(c)
+    return c if c in LEGAL_CHARS else ESCAPE_FMT.format(ord(c))
+
+
+def _escape_for_s3(value):
+    return "".join(_escape_char(c) for c in value.encode('utf-8'))
 
 
 def _get_config(section, option, throw=True):
