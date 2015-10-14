@@ -28,8 +28,9 @@ class ConfigError(Exception):
 def supported():
     """Returns True if the S3 backed is supported on this system"""
     try:
-        list(boto3.resource('s3').buckets.all())
-        return True
+        bucket = _get_config('aws', 'keyring_bucket')
+        resp = boto3.client('s3').list_objects(Bucket=bucket)
+        return resp['ResponseMetadata']['HTTPStatusCode'] == 200
     except:
         return False
 
@@ -54,7 +55,10 @@ class S3Backed(object):
     def bucket(self):
         if self.__bucket is None:
             name = _get_config('aws', 'keyring_bucket', throw=False)
-            self.__bucket = self._find_bucket(name)
+            if name is None:
+                self.__bucket = self._find_bucket(name)
+            else:
+                self.__bucket = boto3.resource('s3').Bucket(name)
         return self.__bucket
 
     @property
@@ -92,16 +96,12 @@ class S3Backed(object):
 
         return self.__namespace
 
-    def _find_bucket(self, name=None):
+    def _find_bucket(self):
         """Finds the backend S3 bucket. The backend bucket must be called
         keyring-[UUID].
         """
-        if name is None:
-            bucket = [b for b in self.s3.buckets.all()
-                      if b.name.find('keyring-') == 0]
-        else:
-            bucket = [b for b in self.s3.buckets.all()
-                      if b.name == name]
+        bucket = [b for b in self.s3.buckets.all()
+                  if b.name.find('keyring-') == 0]
         if len(bucket) == 0:
             bucket_name = "keyring-{}".format(uuid.uuid4())
             bucket = self.s3.Bucket(bucket_name)
