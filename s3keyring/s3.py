@@ -225,6 +225,20 @@ def configure(ask=True):
         value = _get_keyring_config(option, ask=ask, fallback=fallback)
         s3keyring.write_config('aws', option, value)
 
+    # Make sure the configuration was correct
+    check_config()
+
+
+def check_config():
+    """Checks that the configuration is not obviously wrong"""
+    required = ['access_key_id', 'secret_access_key', 'kms_key_id', 'region',
+                'keyring_bucket']
+    for option in required:
+        val = _get_config('aws', option, throw=False)
+        if val is None or len(val) == 0:
+            print("Warning: {} is required. You must run s3keyring "
+                  "configure again.".format(option))
+
 
 def _get_profile(ask=True):
     """Gets the AWS profile to use with s3keyring, if applicable"""
