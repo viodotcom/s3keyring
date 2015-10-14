@@ -103,12 +103,6 @@ If these environment variables are properly set then you can configure the
     s3keyring configure --no-ask
 
 
-Note that if you deploy ``s3keyring`` in the AWS cloud you will not need to set
-any of the AWS credentials environment variables. You will just need to
-associate your instance with a role that has attached the policy described at
-the beginning of this README.
-
-
 
 Who do I ask?
 -------------
