@@ -12,18 +12,7 @@ from keyring.errors import (PasswordDeleteError, InitError)
 from keyring.backend import KeyringBackend
 from boto3.session import Session
 import string
-import sys
-
-
-PY3 = sys.version_info[0] == 3
-
-# allow use of unicode literals
-if PY3:
-    def _unichr(c):
-        return chr(c)
-else:
-    def _unichr(c):
-        return unichr(c)
+import six
 
 
 LEGAL_CHARS = (
@@ -223,7 +212,7 @@ class S3Keyring(S3Backed, KeyringBackend):
 
 def _escape_char(c):
     if isinstance(c, int):
-        c = _unichr(c)
+        c = six.unichr(c)
     return c if c in LEGAL_CHARS else ESCAPE_FMT.format(ord(c))
 
 

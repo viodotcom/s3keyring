@@ -261,7 +261,8 @@ setup_dict = dict(
         'future',
         'keyring',
         'boto3>=1.1.4',
-        'awscli>=1.8.12'
+        'awscli>=1.8.12',
+        'six>=1.10.0'
     ] + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
     tests_require=[
