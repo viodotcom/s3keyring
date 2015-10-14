@@ -34,7 +34,7 @@ S3 bucket
 
 The S3 keyring backend requires you to have read/write access to a S3 bucket.
 If you want to use bucket `mysecretbucket` to store your keyring, you will need
-to attach the following `IAM policy`_ to your AWS user account::
+to attach the following `IAM policy`_ to your IAM user account or IAM role::
 
     {
         "Statement": [
@@ -83,7 +83,7 @@ Then you can simply run::
 Automatic Deployments
 --------------------
 
-You can configure the ``s3keyring`` module completely automatically by setting
+You can configure the ``s3keyring`` module without user input by setting
 the following environment variables in the deployment target:
 
 * ``AWS_PROFILE``: The name of the AWS SDK profile that the keyring will use.
@@ -98,6 +98,12 @@ If these environment variables are properly set then you can configure the
 ``s3keyring`` module automatically using::
 
     s3keyring configure --no-ask
+
+
+Note that if you deploy ``s3keyring`` in the AWS cloud you will not need to set
+any of the AWS credentials environment variables. You will just need to
+associate your instance with a role that has attached the policy described at
+the beginning of this README.
 
 
 
