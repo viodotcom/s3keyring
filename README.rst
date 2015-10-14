@@ -45,16 +45,7 @@ to attach the following `IAM policy`_ to your AWS user account::
                 "Effect": "Allow",
                 "Resource": [
                     "arn:aws:s3:::mysecretbucket"
-                ]
-            },
-            {
-                "Action": [
-                    "s3:GetBucketLocation",
-                    "s3:ListAllMyBuckets"
-                ],
-                "Effect": "Allow",
-                "Resource": [
-                    "arn:aws:s3:::*"
+                    "arn:aws:s3:::mysecretbucket/*"
                 ]
             }
         ],
