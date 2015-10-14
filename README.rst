@@ -74,6 +74,12 @@ installation of the AWS SDK by running::
     aws configure
 
 
+You also need to ensure that you are using version 4 of the AWS Signature for
+authenticated requests to S3::
+
+    aws configure set s3.signature_version s3v4
+
+
 Then you can simply run::
 
     s3keyring configure
@@ -86,9 +92,6 @@ Automatic Deployments
 You can configure the ``s3keyring`` module without user input by setting
 the following environment variables in the deployment target:
 
-* ``AWS_PROFILE``: The name of the AWS SDK profile that the keyring will use.
-* ``AWS_ACCESS_KEY_ID``: Not needed if you specified an ``AWS_PROFILE``.
-* ``AWS_SECRET_ACCESS_KEY``: Not needed if you specified an ``AWS_PROFILE``.
 * ``KEYRING_BUCKET``: The name of the bucket that will hold the keyring data.
 * ``KEYRING_NAMESPACE``: The root S3 prefix for the keyring data. If not
   specified, keyring data will be stored under ``s3://$KEYRING_BUCKET/default``
