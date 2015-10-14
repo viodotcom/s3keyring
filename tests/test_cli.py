@@ -58,7 +58,7 @@ class TestCli(object):
     def test_configure_ask(self, cli_runner):
         result = cli_runner.invoke(cli.configure, ['--ask'])
         assert result.exit_code == 1
-        assert 'AWS Profile' in result.output
+        assert 'AWS region' in result.output
 
     def test_set_password(self, cli_runner, random_entry, keyring):
         result = cli_runner.invoke(cli.set, random_entry)

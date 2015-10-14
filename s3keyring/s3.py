@@ -7,8 +7,7 @@ import base64
 import boto3
 import uuid
 import s3keyring
-from configparser import NoOptionError, NoSectionError, ConfigParser
-
+from configparser import NoOptionError, NoSectionError
 from keyring.errors import (PasswordDeleteError, InitError)
 from keyring.backend import KeyringBackend
 from keyring.util.escape import escape as escape_for_s3
@@ -205,19 +204,7 @@ def _get_config(section, option, throw=True):
 
 def configure(ask=True):
     """Configures the keyring, requesting user input if necessary"""
-    profile = _get_profile(ask=ask)
-    if profile is None:
-        profile_str = ''
-    else:
-        profile_str = profile
-    s3keyring.write_config('aws', 'profile', profile_str)
-
-    key_id = _get_aws_key('aws_access_key_id', profile, ask=ask)
-    secret_key = _get_aws_key('aws_secret_access_key', profile, ask=ask)
-    s3keyring.write_config('aws', 'access_key_id', key_id)
-    s3keyring.write_config('aws', 'secret_access_key', secret_key)
-
-    region = _get_region(profile, ask=ask)
+    region = _get_region(ask=ask)
     s3keyring.write_config('aws', 'region', region)
 
     fallback = {'keyring_namespace': 'default'}
@@ -231,95 +218,12 @@ def configure(ask=True):
 
 def check_config():
     """Checks that the configuration is not obviously wrong"""
-    required = ['access_key_id', 'secret_access_key', 'kms_key_id', 'region',
-                'keyring_bucket']
+    required = ['kms_key_id', 'region', 'keyring_bucket']
     for option in required:
         val = _get_config('aws', option, throw=False)
         if val is None or len(val) == 0:
             print("Warning: {} is required. You must run s3keyring "
                   "configure again.".format(option))
-
-
-def _get_profile(ask=True):
-    """Gets the AWS profile to use with s3keyring, if applicable"""
-    profile = os.environ.get('AWS_PROFILE', None)
-    if not profile:
-        aws_creds = _get_aws_credentials()
-        if aws_creds is None:
-            # The AWS CLI is not configured: profile is N/A
-            return
-        profile = _get_config('aws', 'profile', throw=False)
-    if profile is None:
-        # Last resort, use the only profile in .aws/credentials
-        cfg = _get_aws_credentials()
-        if len(cfg.sections()) == 1:
-            profile = cfg.sections()[0]
-
-    resp = ''
-    if ask:
-        resp = input("AWS Profile to use [{}] : ".format(profile))
-    if profile is None or len(resp) > 0:
-        return resp
-
-    return profile
-
-
-def _get_aws_key(keyname, profile=None, ask=True):
-    if profile is None:
-        # We need to ask
-        key = _guess_aws_key(keyname)
-        if ask:
-            tmp = input("AWS {keytitle} [{maskedkey}]: ".format(
-                keytitle=keyname.replace('_', ' ').title(),
-                maskedkey=_mask_key(key)))
-            if len(tmp) > 0:
-                # User wants to change the key
-                key = tmp
-    else:
-        key = _get_aws_profile_key(keyname, profile)
-
-    return key
-
-
-def _guess_aws_key(keyname):
-    key = s3keyring.read_config('aws', keyname.lower())
-    if key == '':
-        key = os.environ.get(keyname.upper(), '')
-    return key
-
-
-def _get_aws_profile_key(keyname, profile):
-    cfg = _get_aws_credentials()
-    return cfg.get(profile, keyname)
-
-
-def _mask_key(key):
-    if len(key) == 0:
-        return key
-    else:
-        return '*'*(len(key) - 4) + key[-4:]
-
-
-def _get_region(profile=None, ask=True):
-    if profile is None:
-        region = s3keyring.read_config('aws', 'region')
-    else:
-        cfg = _get_aws_config()
-        if cfg and profile in cfg.sections() and \
-                'region' in cfg.options(profile):
-            region = cfg.get(profile, 'region')
-        else:
-            region = ''
-
-    if region == '':
-        region = os.environ.get('AWS_REGION', '')
-
-    if ask:
-        resp = input("AWS region [{}]: ".format(region))
-        if len(resp) > 0:
-            return resp
-
-    return region
 
 
 def _get_keyring_config(option, ask=True, fallback=None):
@@ -338,17 +242,15 @@ def _get_keyring_config(option, ask=True, fallback=None):
     return val
 
 
-def _get_aws_config():
-    cfg = ConfigParser()
-    cfg_file = os.path.join(os.path.expanduser('~'), '.aws', 'config')
-    if os.path.isfile(cfg_file):
-        cfg.read(cfg_file)
-        return cfg
+def _get_region(profile=None, ask=True):
+    region = s3keyring.read_config('aws', 'region')
 
+    if region == '':
+        region = os.environ.get('AWS_REGION', '')
 
-def _get_aws_credentials():
-    cfg = ConfigParser()
-    cfg_file = os.path.join(os.path.expanduser('~'), '.aws', 'credentials')
-    if os.path.isfile(cfg_file):
-        cfg.read(cfg_file)
-        return cfg
+    if ask:
+        resp = input("AWS region [{}]: ".format(region))
+        if len(resp) > 0:
+            return resp
+
+    return region
