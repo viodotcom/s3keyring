@@ -22,7 +22,7 @@ Installation
 
 Run in a terminal::
 
-    pip install git+https://github.com/InnovativeTravel/s3-keyring
+    pip install s3keyring
 
 
 Prerequisites
