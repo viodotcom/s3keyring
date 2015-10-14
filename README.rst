@@ -20,9 +20,15 @@ finely tuned using AWS IAM policies.
 Installation
 ------------
 
-Run in a terminal::
+You can install a stable release from Pipy::
 
     pip install s3keyring
+
+
+Or you can choose to install the development version::
+
+    pip install git+https://github.com/InnovativeTravel/s3-keyring
+
 
 
 Prerequisites
