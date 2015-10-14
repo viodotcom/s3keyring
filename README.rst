@@ -85,6 +85,39 @@ Then you can simply run::
     s3keyring configure
 
 
+Usage
+-----
+
+The ``s3keyring`` module provides the same API as Python's `keyring module`_.
+You can access your S3 keyring programmatically from your Python code like
+this::
+
+
+    from s3keyring.s3 import S3Keyring
+    kr = S3Keyring()
+    kr.set_password('service', 'username', '123456')
+    assert '123456' == kr.get_password('service', 'username')
+    kr.delete_password('service', 'username')
+    assert kr.get_password('service', 'username') is None
+
+
+You can also use the keyring from the command line::
+
+    # Store a password
+    s3keyring set service username 123456
+    # Retrieve it
+    s3keyring get service username
+    # Delete it
+    s3keyring delete service username
+
+
+
+
+
+
+
+.. _keyring module: https://pypi.python.org/pypi/keyring
+
 
 Automatic Deployments
 --------------------
