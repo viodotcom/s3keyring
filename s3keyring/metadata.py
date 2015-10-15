@@ -15,4 +15,4 @@ authors_string = ', '.join(authors)
 emails = ['german@innovativetravel.eu']
 license = 'MIT'
 copyright = '2015 ' + authors_string
-url = 'http://github.com/Innovativetravel/s3keyring'
+url = 'http://github.com/InnovativeTravel/s3-keyring'
