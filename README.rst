@@ -39,8 +39,9 @@ S3 bucket
 ~~~~~~~~~
 
 The S3 keyring backend requires you to have read/write access to a S3 bucket.
-If you want to use bucket `mysecretbucket` to store your keyring, you will need
-to attach the following `IAM policy`_ to your IAM user account or IAM role::
+If you want to use bucket ``mysecretbucket`` to store your keyring, you will
+need to attach the following `IAM policy`_ to your IAM user account or IAM
+role::
 
     {
         "Statement": [
