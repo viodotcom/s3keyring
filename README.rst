@@ -47,7 +47,9 @@ role::
         "Statement": [
             {
                 "Action": [
-                    "s3:*"
+                    "s3:ListBucket",
+                    "s3:PutObject",
+                    "s3:GetObject"
                 ],
                 "Effect": "Allow",
                 "Resource": [
