@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import os
 import base64
 import boto3
@@ -11,8 +12,11 @@ from configparser import NoOptionError, NoSectionError
 from keyring.errors import (PasswordDeleteError, InitError)
 from keyring.backend import KeyringBackend
 from boto3.session import Session
+from botocore.exceptions import EndpointConnectionError
 import string
 import six
+import keyring
+import sys
 
 
 LEGAL_CHARS = (
@@ -165,7 +169,14 @@ class S3Keyring(S3Backed, KeyringBackend):
 
         # Read the password from S3
         prefix = self._get_s3_key(service, username)
-        values = list(self.bucket.objects.filter(Prefix=prefix))
+        try:
+            values = list(self.bucket.objects.filter(Prefix=prefix))
+        except EndpointConnectionError:
+            # Can't connect to S3: fallback to the local keyring
+            print("WARNING: can't connect to S3, falling back to OS keyring",
+                  file=sys.stderr)
+            return keyring.get_password(service, username)
+
         if len(values) == 0:
             # service/username not found
             return
@@ -187,9 +198,21 @@ class S3Keyring(S3Backed, KeyringBackend):
 
         # Save in S3 using both server and client side encryption
         keyname = self._get_s3_key(service, username)
-        self.bucket.Object(keyname).put(ACL='private', Body=pwd_base64,
-                                        ServerSideEncryption='aws:kms',
-                                        SSEKMSKeyId=self.kms_key_id)
+        try:
+            self.bucket.Object(keyname).put(ACL='private', Body=pwd_base64,
+                                            ServerSideEncryption='aws:kms',
+                                            SSEKMSKeyId=self.kms_key_id)
+        except EndpointConnectionError:
+            # Can't connect to S3: fallback to OS keyring
+            print("WARNING: can't connect to S3, storing in OS keyring",
+                  file=sys.stderr)
+            keyring.set_password(service, username, password)
+            return
+
+        # We also save the password in the local OS keyring. This will allow us
+        # to retrieve the password locally if the S3 bucket would not be
+        # available.
+        keyring.set_password(service, username, password)
 
     def delete_password(self, service, username):
         """Delete the password for the username of the service.
@@ -208,6 +231,13 @@ class S3Keyring(S3Backed, KeyringBackend):
                                        prefix=prefix)
         else:
             objects[0].delete()
+
+        # Delete also in the local keyring
+        try:
+            keyring.delete_password(service, username)
+        except PasswordDeleteError:
+            # It's OK: the password was not available in the local keyring
+            pass
 
 
 def _escape_char(c):
@@ -249,8 +279,9 @@ def check_config():
     for option in required:
         val = _get_config('aws', option, throw=False)
         if val is None or len(val) == 0:
-            print("Warning: {} is required. You must run s3keyring "
-                  "configure again.".format(option))
+            print("WARNING: {} is required. You must run s3keyring "
+                  "configure again.".format(option),
+                  file=sys.stderr)
 
 
 def _get_keyring_config(option, ask=True, fallback=None):
