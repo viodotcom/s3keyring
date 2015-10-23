@@ -58,6 +58,7 @@ class S3Backed(object):
         self.__profile = profile
         self.__kms_key_id = kms_key_id
         self.__session = None
+        self.__use_local_keyring = None
 
     @property
     def session(self):
@@ -80,6 +81,13 @@ class S3Backed(object):
             else:
                 self.__bucket = boto3.resource('s3').Bucket(name)
         return self.__bucket
+
+    @property
+    def use_local_keyring(self):
+        if self.__use_local_keyring is None:
+            self.__use_local_keyring = _get_config(
+                'default', 'use_local_keyring') == 'yes'
+        return self.__use_local_keyring
 
     @property
     def region(self):
@@ -172,10 +180,13 @@ class S3Keyring(S3Backed, KeyringBackend):
         try:
             values = list(self.bucket.objects.filter(Prefix=prefix))
         except EndpointConnectionError:
-            # Can't connect to S3: fallback to the local keyring
-            print("WARNING: can't connect to S3, falling back to OS keyring",
-                  file=sys.stderr)
-            return keyring.get_password(service, username)
+            if self.use_local_keyring:
+                # Can't connect to S3: fallback to the local keyring
+                print("WARNING: can't connect to S3, using OS keyring instead",
+                      file=sys.stderr)
+                return keyring.get_password(service, username)
+            else:
+                raise
 
         if len(values) == 0:
             # service/username not found
@@ -203,11 +214,12 @@ class S3Keyring(S3Backed, KeyringBackend):
                                             ServerSideEncryption='aws:kms',
                                             SSEKMSKeyId=self.kms_key_id)
         except EndpointConnectionError:
-            # Can't connect to S3: fallback to OS keyring
-            print("WARNING: can't connect to S3, storing in OS keyring",
-                  file=sys.stderr)
-            keyring.set_password(service, username, password)
-            return
+            if self.use_local_keyring:
+                # Can't connect to S3: fallback to OS keyring
+                print("WARNING: can't connect to S3, storing in OS keyring",
+                      file=sys.stderr)
+            else:
+                raise
 
         # We also save the password in the local OS keyring. This will allow us
         # to retrieve the password locally if the S3 bucket would not be
@@ -220,24 +232,33 @@ class S3Keyring(S3Backed, KeyringBackend):
         service = _escape_for_s3(service)
         username = _escape_for_s3(username)
         prefix = self._get_s3_key(service, username)
-        objects = list(self.bucket.objects.filter(Prefix=prefix))
-        if len(objects) == 0:
-            msg = ("Password for service {service} and username {username} "
-                   "not found.").format(service=service, username=username)
-            raise PasswordDeleteError(msg)
-        elif len(objects) > 1:
-            msg = ("Multiple objects in bucket {bucket} match the prefix "
-                   "{prefix}.").format(bucket=self.bucket.name,
-                                       prefix=prefix)
-        else:
-            objects[0].delete()
+        try:
+            objects = list(self.bucket.objects.filter(Prefix=prefix))
+            if len(objects) == 0:
+                msg = ("Password for {service}/{username} not found"
+                       ).format(service=service, username=username)
+                raise PasswordDeleteError(msg)
+            elif len(objects) > 1:
+                msg = ("Multiple objects in bucket {bucket} match the prefix "
+                       "{prefix}.").format(bucket=self.bucket.name,
+                                           prefix=prefix)
+            else:
+                objects[0].delete()
+        except EndpointConnectionError:
+            if self.use_local_keyring:
+                # Can't connect to S3: fallback to OS keyring
+                print("WARNING: can't connect to S3, deleting from OS keyring",
+                      file=sys.stderr)
+            else:
+                raise
 
         # Delete also in the local keyring
         try:
             keyring.delete_password(service, username)
         except PasswordDeleteError:
             # It's OK: the password was not available in the local keyring
-            pass
+            print("WARNING: {}/{} not found in OS keyring".format(
+                service, username))
 
 
 def _escape_char(c):
