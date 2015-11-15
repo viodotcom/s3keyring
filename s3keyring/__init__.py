@@ -18,34 +18,38 @@ __default_config_file__ = os.path.join(__dir__, 's3keyring.ini')
 __user_config_file__ = os.path.join(os.path.expanduser('~'),
                                     '.s3keyring.ini')
 
-
-# Program configuration management
-def __initialize_config():
-    """Copies the default configuration to the user homedir"""
+if not os.path.isfile(__user_config_file__):
     shutil.copyfile(__default_config_file__, __user_config_file__)
 
-
-def __get_config():
-    """Gets a ConfigParser object with the current program configuration"""
-    if not os.path.isfile(__user_config_file__):
-        __initialize_config()
-
-    cp = configparser.ConfigParser()
-    cp.read(__user_config_file__)
-    return cp
+config = configparser.ConfigParser()
+config.read(__user_config_file__)
 
 
 def read_config(section, param):
     """Reads a configuration parameter"""
-    return __get_config().get(section, param)
+    return config.get(section, param)
+
+
+def read_profile(profile_name):
+    """Returns a dict-like object with profile options"""
+    return config["profile:{}".format(profile_name)]
+
+
+def read_profile_config(profile_name, param):
+    """Reads a config option for a profile"""
+    return read_config("profile:{}".format(profile_name), param)
 
 
 def write_config(section, param, value):
     """Writes a configuration parameter"""
-    cfg = __get_config()
-    if not cfg.has_section(section):
-        cfg.add_section(section)
+    if not config.has_section(section):
+        config.add_section(section)
 
-    cfg.set(section, param, value)
+    config.set(section, param, value)
     with open(__user_config_file__, 'w') as f:
-        cfg.write(f)
+        config.write(f)
+
+
+def write_profile_config(profile_name, param, value):
+    """Writes a profile parameter value"""
+    write_config("profile:{}".format(profile_name), param, value)

@@ -6,10 +6,8 @@ from __future__ import print_function
 import os
 import base64
 import boto3
-import uuid
 import s3keyring
-from configparser import NoOptionError, NoSectionError
-from keyring.errors import (PasswordDeleteError, InitError)
+from keyring.errors import (PasswordDeleteError)
 from keyring.backend import KeyringBackend
 from boto3.session import Session
 from botocore.exceptions import EndpointConnectionError
@@ -36,79 +34,77 @@ class PasswordGetError(Exception):
 class ConfigError(Exception):
     """Raised when the S3 backend has not been properly configured
     """
+    pass
 
 
 def supported():
     """Returns True if the S3 backed is supported on this system"""
     try:
-        bucket = _get_config('aws', 'keyring_bucket')
-        resp = boto3.client('s3').list_objects(Bucket=bucket)
+        kr = S3Keyring()
+        kr.configure(ask=False)
+        profile = s3keyring.read_config('default', 'profile')
+        profile = s3keyring.read_profile(profile)
+        aws_profile = profile.get('aws_profile', profile)
+        session = boto3.session.Session(profile_name=aws_profile)
+        bucket = profile.get('bucket')
+        if not bucket:
+            return False
+        client = session.client('s3')
+        resp = client.list_objects(Bucket=bucket)
         return resp['ResponseMetadata']['HTTPStatusCode'] == 200
     except:
         return False
 
 
 class S3Backed(object):
-    def __init__(self, kms_key_id=None, region=None, profile=None):
+    def __init__(self, profile=None, profile_name=None):
         """Creates a S3 bucket for the backend if one does not exist already"""
+        if profile_name is None:
+            # There must be a profile associated to a keyring
+            self.profile_name = s3keyring.read_config('default', 'profile')
+        else:
+            self.profile_name = profile_name
+
+        if profile is None:
+            # Either the user passes the profile as a dict, or must be read
+            # from the config file.
+            self.profile = s3keyring.read_profile(self.profile_name)
+        else:
+            self.profile = profile
+
         self.__s3 = None
-        self.__bucket = None
-        self.__namespace = None
-        self.__region = region
-        self.__profile = profile
-        self.__kms_key_id = kms_key_id
         self.__session = None
-        self.__use_local_keyring = None
+        # Will store a boto3 Bucket object
+        self.__bucket = None
 
     @property
     def session(self):
         if self.__session is None:
-            self.__session = Session(region_name=self.region)
+            self.__session = Session(profile_name=self.profile['aws_profile'])
         return self.__session
 
     @property
     def kms_key_id(self):
-        if self.__kms_key_id is None:
-            self.__kms_key_id = _get_config('aws', 'kms_key_id')
-        return self.__kms_key_id
+        return self.profile['kms_key_id']
 
     @property
     def bucket(self):
         if self.__bucket is None:
-            name = _get_config('aws', 'keyring_bucket', throw=False)
-            if name is None:
-                self.__bucket = self._find_bucket(name)
-            else:
-                self.__bucket = boto3.resource('s3').Bucket(name)
+            self.__bucket = boto3.resource('s3').Bucket(self.profile['bucket'])
         return self.__bucket
 
     @property
     def use_local_keyring(self):
-        if self.__use_local_keyring is None:
-            self.__use_local_keyring = _get_config(
-                'default', 'use_local_keyring') == 'yes'
-        return self.__use_local_keyring
+        return self.profile.get('use_local_keyring', 'no') == 'yes'
 
     @property
     def region(self):
-        if self.__region is None:
-            self.__region = s3keyring.read_config('aws', 'region')
-        return self.__region
-
-    @property
-    def profile(self):
-        if self.__profile is None:
-            self.__profile = _get_config('aws', 'profile')
-        return self.__profile
-
-    @property
-    def name(self):
-        return self.bucket.name.split('keyring-')[1]
+        return self.profile['region']
 
     @property
     def s3(self):
         if self.__s3 is None:
-            self.__s3 = boto3.resource('s3')
+            self.__s3 = self.session.resource('s3')
         return self.__s3
 
     @property
@@ -118,42 +114,57 @@ class S3Backed(object):
         access permissions can then be given to different prefixes so that
         only the right IAM roles/users/groups have access to a keychain
         namespace"""
-        if self.__namespace is None:
-            self.__namespace = _escape_for_s3(_get_config('aws',
-                                                          'keyring_namespace'))
+        return _escape_for_s3(self.profile['namespace'])
 
-        return self.__namespace
+    def configure(self, ask=True):
+        """Configures the keyring, requesting user input if necessary"""
+        region = self._get_region(ask=ask)
+        s3keyring.write_profile_config(self.profile_name, 'region', region)
 
-    def _find_bucket(self):
-        """Finds the backend S3 bucket. The backend bucket must be called
-        keyring-[UUID].
-        """
-        bucket = [b for b in self.s3.buckets.all()
-                  if b.name.find('keyring-') == 0]
-        if len(bucket) == 0:
-            bucket_name = "keyring-{}".format(uuid.uuid4())
-            bucket = self.s3.Bucket(bucket_name)
-            bucket.create(ACL='private',
-                          CreateBucketConfiguration={
-                              'LocationConstraint': self.region})
-        elif len(bucket) > 1:
-            msg = ("Can't tell which of these buckets to use for the keyring: "
-                   "{buckets}").format([b.name for b in bucket])
-            raise InitError(msg)
-        else:
-            bucket = bucket[0]
-        return bucket
+        fallback = {'namespace': 'default', 'aws_profile': self.profile}
+        for option in ['kms_key_id', 'bucket', 'namespace', 'aws_profile']:
+            value = self.get_config(option, ask=ask, fallback=fallback)
+            s3keyring.write_profile_config(self.profile_name, option, value)
 
-    def _get_profile_default(self, profile, option):
-        """Gets a default option value for a given AWS profile"""
-        if profile not in self.config:
-            profile = 'default'
+        # We just updated the ini file: so reload the profile info
+        self.profile = s3keyring.read_profile(self.profile_name)
 
-        if option not in self.config[profile]:
-            raise ConfigError("No default for option {} in profile {}".format(
-                option, profile))
+        # Make sure the profile configuration is correct
+        self._check_config()
 
-        return self.config[profile][option]
+    def _get_region(self, ask=True):
+        """Gets the profile region, maybe requesting user input"""
+        region = self.profile.get('region', '')
+        if region == '':
+            region = os.environ.get('AWS_REGION', '')
+        if ask:
+            resp = input("AWS region [{}]: ".format(region))
+            if len(resp) > 0:
+                return resp
+        return region
+
+    def _check_config(self):
+        """Checks that the configuration is not obviously wrong"""
+        required = ['kms_key_id', 'region', 'bucket']
+        for option in required:
+            val = self.profile.get(option, None)
+            if val is None or len(val) == 0:
+                print("WARNING: {} is required. You must run s3keyring "
+                      "configure again.".format(option),
+                      file=sys.stderr)
+
+    def get_config(self, option, ask=True, fallback=None):
+        val = self.profile.get(option.lower(), '')
+        if val == '':
+            val = os.environ.get("KEYRING_" + option.upper(), '')
+        if fallback and val == '':
+            val = fallback.get(option.lower(), '')
+        if ask:
+            resp = input("{} [{}]: ".format(
+                option.replace('_', ' ').title(), val))
+            if len(resp) > 0:
+                return resp
+        return val
 
 
 class S3Keyring(S3Backed, KeyringBackend):
@@ -269,67 +280,3 @@ def _escape_char(c):
 
 def _escape_for_s3(value):
     return "".join(_escape_char(c) for c in value.encode('utf-8'))
-
-
-def _get_config(section, option, throw=True):
-    """Gets a configuration option or throws exception if not configured"""
-    try:
-        return s3keyring.read_config(section, option)
-    except (NoOptionError, NoSectionError):
-        if throw:
-            raise InitError("You need to run: s3keyring configure")
-
-
-def configure(ask=True):
-    """Configures the keyring, requesting user input if necessary"""
-    region = _get_region(ask=ask)
-    s3keyring.write_config('aws', 'region', region)
-
-    fallback = {'keyring_namespace': 'default'}
-    for option in ['kms_key_id', 'keyring_bucket', 'keyring_namespace']:
-        value = _get_keyring_config(option, ask=ask, fallback=fallback)
-        s3keyring.write_config('aws', option, value)
-
-    # Make sure the configuration was correct
-    check_config()
-
-
-def check_config():
-    """Checks that the configuration is not obviously wrong"""
-    required = ['kms_key_id', 'region', 'keyring_bucket']
-    for option in required:
-        val = _get_config('aws', option, throw=False)
-        if val is None or len(val) == 0:
-            print("WARNING: {} is required. You must run s3keyring "
-                  "configure again.".format(option),
-                  file=sys.stderr)
-
-
-def _get_keyring_config(option, ask=True, fallback=None):
-    val = s3keyring.read_config('aws', option.lower())
-    if val == '':
-        val = os.environ.get(option.upper(), '')
-    if fallback and val == '':
-        val = fallback.get(option.lower(), '')
-
-    if ask:
-        resp = input("{} [{}]: ".format(
-            option.replace('_', ' ').title(), val))
-        if len(resp) > 0:
-            return resp
-
-    return val
-
-
-def _get_region(profile=None, ask=True):
-    region = s3keyring.read_config('aws', 'region')
-
-    if region == '':
-        region = os.environ.get('AWS_REGION', '')
-
-    if ask:
-        resp = input("AWS region [{}]: ".format(region))
-        if len(resp) > 0:
-            return resp
-
-    return region

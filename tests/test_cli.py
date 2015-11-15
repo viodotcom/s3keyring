@@ -8,15 +8,16 @@ import pytest
 from s3keyring import cli
 import uuid
 from click.testing import CliRunner
-from s3keyring.s3 import S3Keyring, configure, supported
+from s3keyring.s3 import S3Keyring, supported
 from keyring.errors import PasswordDeleteError
 parametrize = pytest.mark.parametrize
 
 
 @pytest.fixture
 def keyring(scope='module'):
-    configure(ask=False)
-    return S3Keyring()
+    kr = S3Keyring()
+    kr.configure(ask=False)
+    return kr
 
 
 @pytest.fixture
@@ -40,7 +41,7 @@ def random_entry(keyring, scope='function'):
 
 
 @parametrize('helparg', ['--help'])
-def test_help(helparg, capsys, cli_runner):
+def test_help(helparg, cli_runner):
     result = cli_runner.invoke(cli.main, [helparg])
     assert result.exit_code == 0
     assert 's3keyring' in result.output
@@ -52,16 +53,17 @@ class TestCli(object):
                                 "system")
 
     def test_configure_no_ask(self, cli_runner):
-        result = cli_runner.invoke(cli.configure, ['--no-ask'])
+        result = cli_runner.invoke(cli.main, ['configure', '--no-ask'])
+        # Assumes the envvars have been set as described in README
         assert result.exit_code == 0
 
     def test_configure_ask(self, cli_runner):
-        result = cli_runner.invoke(cli.configure, ['--ask'])
+        result = cli_runner.invoke(cli.main, ['configure', '--ask'])
         assert result.exit_code == 1
         assert 'AWS region' in result.output
 
     def test_set_password(self, cli_runner, random_entry, keyring):
-        result = cli_runner.invoke(cli.set, random_entry)
+        result = cli_runner.invoke(cli.main, ['set'] + list(random_entry))
         assert result.exit_code == 0
         pwd = keyring.get_password(*random_entry[:2])
         assert pwd == random_entry[2]
@@ -69,6 +71,7 @@ class TestCli(object):
     def test_delete_password(self, cli_runner, random_entry, keyring):
         keyring.set_password(*random_entry)
         assert random_entry[2] == keyring.get_password(*random_entry[:2])
-        result = cli_runner.invoke(cli.delete, random_entry[:2])
+        result = cli_runner.invoke(cli.main, ['delete'] +
+                                   list(random_entry)[:2])
         assert result.exit_code == 0
         assert keyring.get_password(*random_entry[:2]) is None
