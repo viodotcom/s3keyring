@@ -90,7 +90,8 @@ class S3Backed(object):
     @property
     def bucket(self):
         if self.__bucket is None:
-            self.__bucket = boto3.resource('s3').Bucket(self.profile['bucket'])
+            bucket_name = self.profile['bucket']
+            self.__bucket = self.session.resource('s3').Bucket(bucket_name)
         return self.__bucket
 
     @property

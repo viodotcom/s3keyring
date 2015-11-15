@@ -25,6 +25,10 @@ config = configparser.ConfigParser()
 config.read(__user_config_file__)
 
 
+class InvalidProfileError(Exception):
+    pass
+
+
 def read_config(section, param):
     """Reads a configuration parameter"""
     return config.get(section, param)
@@ -32,7 +36,10 @@ def read_config(section, param):
 
 def read_profile(profile_name):
     """Returns a dict-like object with profile options"""
-    return config["profile:{}".format(profile_name)]
+    section = "profile:{}".format(profile_name)
+    if section not in config:
+        raise InvalidProfileError("Profile {} not found".format(profile_name))
+    return config[section]
 
 
 def read_profile_config(profile_name, param):
