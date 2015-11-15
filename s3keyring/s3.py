@@ -180,6 +180,10 @@ class S3Keyring(S3Backed, KeyringBackend):
         """The S3 key where the secret will be stored"""
         return "{}/{}/{}/secret.b64".format(self.namespace, service, username)
 
+    def get_value(self, *args, **kwargs):
+        """An alias of method get_password"""
+        return self.get_password(*args, **kwargs)
+
     def get_password(self, service, username):
         """Read the password from the S3 bucket.
         """
@@ -210,6 +214,10 @@ class S3Keyring(S3Backed, KeyringBackend):
         pwd = base64.decodestring(pwd_base64)
         return pwd.decode('utf-8')
 
+    def set_value(self, *args, **kwargs):
+        """An alias for method set_password"""
+        return self.set_password(*args, **kwargs)
+
     def set_password(self, service, username, password):
         """Write the password in the S3 bucket.
         """
@@ -236,6 +244,10 @@ class S3Keyring(S3Backed, KeyringBackend):
         # to retrieve the password locally if the S3 bucket would not be
         # available.
         keyring.set_password(service, username, password)
+
+    def delete_value(self, *args, **kwargs):
+        """An alias for delete_password"""
+        return self.delete_password(*args, **kwargs)
 
     def delete_password(self, service, username):
         """Delete the password for the username of the service.
