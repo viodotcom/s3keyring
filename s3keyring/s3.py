@@ -11,6 +11,7 @@ from keyring.errors import (PasswordDeleteError)
 from keyring.backend import KeyringBackend
 from boto3.session import Session
 from botocore.exceptions import EndpointConnectionError
+from s3keyring import ProfileNotFoundError
 import string
 import six
 import keyring
@@ -31,8 +32,8 @@ class PasswordGetError(Exception):
     pass
 
 
-class ConfigError(Exception):
-    """Raised when the S3 backend has not been properly configured
+class InitError(Exception):
+    """Raised when the S3 backend has not been properly initialized
     """
     pass
 
@@ -68,7 +69,14 @@ class S3Backed(object):
         if profile is None:
             # Either the user passes the profile as a dict, or must be read
             # from the config file.
-            self.profile = s3keyring.read_profile(self.profile_name)
+            try:
+                self.profile = s3keyring.read_profile(self.profile_name)
+            except ProfileNotFoundError:
+                s3keyring.initialize_profile_config(self.profile_name)
+                self.profile = s3keyring.read_profile(self.profile_name)
+        elif profile_name is None:
+            raise InitError("You must provide parameter 'profile_name' when "
+                            "providing a 'profile'")
         else:
             self.profile = profile
 
@@ -122,7 +130,7 @@ class S3Backed(object):
         region = self._get_region(ask=ask)
         s3keyring.write_profile_config(self.profile_name, 'region', region)
 
-        fallback = {'namespace': 'default', 'aws_profile': self.profile}
+        fallback = {'namespace': 'default', 'aws_profile': self.profile_name}
         for option in ['kms_key_id', 'bucket', 'namespace', 'aws_profile']:
             value = self.get_config(option, ask=ask, fallback=fallback)
             s3keyring.write_profile_config(self.profile_name, option, value)
@@ -137,7 +145,7 @@ class S3Backed(object):
         """Gets the profile region, maybe requesting user input"""
         region = self.profile.get('region', '')
         if region == '':
-            region = os.environ.get('AWS_REGION', '')
+            region = os.environ.get('KEYRING_REGION', '')
         if ask:
             resp = input("AWS region [{}]: ".format(region))
             if len(resp) > 0:
@@ -156,7 +164,7 @@ class S3Backed(object):
 
     def get_config(self, option, ask=True, fallback=None):
         val = self.profile.get(option.lower(), '')
-        if val == '':
+        if val is None or val == '':
             val = os.environ.get("KEYRING_" + option.upper(), '')
         if fallback and val == '':
             val = fallback.get(option.lower(), '')

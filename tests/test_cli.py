@@ -49,11 +49,16 @@ def test_help(helparg, cli_runner):
 
 class TestCli(object):
     pytestmark = pytest.mark.skipif(
-        not supported(), reason="S3 backend has not been configured in this "
-                                "system")
+        not supported(), reason="S3 backend not supported or not configured")
 
     def test_configure_no_ask(self, cli_runner):
         result = cli_runner.invoke(cli.main, ['configure', '--no-ask'])
+        # Assumes the envvars have been set as described in README
+        assert result.exit_code == 0
+
+    def test_configure_profile(self, cli_runner):
+        result = cli_runner.invoke(cli.main, ['--profile', 'dummy',
+                                              'configure', '--no-ask'])
         # Assumes the envvars have been set as described in README
         assert result.exit_code == 0
 

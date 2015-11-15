@@ -9,12 +9,12 @@ import s3keyring.s3
 
 
 @click.group(name='s3keyring')
-@click.option('--profile_name', default='default')
+@click.option('--profile', default='default')
 @click.pass_context
-def main(ctx, profile_name):
+def main(ctx, profile):
     """S3 backend for Python's keyring module
     """
-    ctx.obj = s3keyring.s3.S3Keyring(profile_name=profile_name)
+    ctx.obj = s3keyring.s3.S3Keyring(profile_name=profile)
 
 
 @main.command()
