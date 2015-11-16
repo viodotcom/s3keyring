@@ -43,8 +43,8 @@ def supported():
     try:
         kr = S3Keyring()
         kr.configure(ask=False)
-        profile = s3keyring.read_config('default', 'profile')
-        profile = s3keyring.read_profile(profile)
+        profile = kr.config.get('default', 'profile')
+        profile = kr.config.get_profile(profile)
         aws_profile = profile.get('aws_profile', profile)
         session = boto3.session.Session(profile_name=aws_profile)
         bucket = profile.get('bucket')
@@ -60,9 +60,11 @@ def supported():
 class S3Backed(object):
     def __init__(self, profile=None, profile_name=None):
         """Creates a S3 bucket for the backend if one does not exist already"""
+        self.config = s3keyring.Config()
+
         if profile_name is None:
             # There must be a profile associated to a keyring
-            self.profile_name = s3keyring.read_config('default', 'profile')
+            self.profile_name = self.config.get('default', 'profile')
         else:
             self.profile_name = profile_name
 
@@ -70,10 +72,10 @@ class S3Backed(object):
             # Either the user passes the profile as a dict, or must be read
             # from the config file.
             try:
-                self.profile = s3keyring.read_profile(self.profile_name)
+                self.profile = self.config.get_profile(self.profile_name)
             except ProfileNotFoundError:
-                s3keyring.initialize_profile_config(self.profile_name)
-                self.profile = s3keyring.read_profile(self.profile_name)
+                self.config.initialize_profile(self.profile_name)
+                self.profile = self.config.get_profile(self.profile_name)
         elif profile_name is None:
             raise InitError("You must provide parameter 'profile_name' when "
                             "providing a 'profile'")
@@ -128,15 +130,16 @@ class S3Backed(object):
     def configure(self, ask=True):
         """Configures the keyring, requesting user input if necessary"""
         region = self._get_region(ask=ask)
-        s3keyring.write_profile_config(self.profile_name, 'region', region)
+        self.config.set_in_profile(self.profile_name, 'region', region)
 
         fallback = {'namespace': 'default', 'aws_profile': self.profile_name}
         for option in ['kms_key_id', 'bucket', 'namespace', 'aws_profile']:
             value = self.get_config(option, ask=ask, fallback=fallback)
-            s3keyring.write_profile_config(self.profile_name, option, value)
+            self.config.set_in_profile(self.profile_name, option, value)
 
-        # We just updated the ini file: so reload the profile info
-        self.profile = s3keyring.read_profile(self.profile_name)
+        # We just updated the ini file: reload
+        self.profile = self.config.get_profile(self.profile_name)
+        self.config.load()
 
         # Make sure the profile configuration is correct
         self._check_config()

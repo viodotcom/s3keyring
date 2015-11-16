@@ -1,14 +1,23 @@
 # -*- coding: utf-8 -*-
 
-import s3keyring
+
+import pytest
+from s3keyring.s3 import S3Keyring
 
 
-def test_read_config():
+@pytest.fixture
+def config(scope='module'):
+    return S3Keyring().config
+
+
+def test_read_config(config):
     """Sets value for an existing configuration option"""
-    profile_name = s3keyring.read_config('default', 'profile')
+    profile_name = config.get('default', 'profile')
     assert profile_name == 'default'
 
 
-def test_write_config():
-    s3keyring.write_config('default', 'dummyparam', 'anothervalue')
-    assert s3keyring.read_config('default', 'dummyparam') == 'anothervalue'
+def test_write_config(config):
+    config.set('default', 'dummyparam', 'anothervalue')
+    config.save()
+    config.load()
+    assert config.get('default', 'dummyparam') == 'anothervalue'
