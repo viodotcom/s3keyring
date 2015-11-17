@@ -82,7 +82,14 @@ class S3Backed(object):
     @property
     def session(self):
         if self.__session is None:
-            self.__session = Session(profile_name=self.profile['aws_profile'])
+            aws_profile = self.profile.get('aws_profile')
+            if aws_profile == '':
+                # No profile specified: use whatever default credentials
+                # (maybe temporary creds) are set up in this system
+                self.__session = Session()
+            else:
+                self.__session = Session(
+                    profile_name=self.profile.get('aws_profile'))
         return self.__session
 
     @property
@@ -117,7 +124,7 @@ class S3Backed(object):
 
     def configure(self, ask=True):
         """Configures the keyring, requesting user input if necessary"""
-        fallback = {'namespace': 'default', 'aws_profile': self.profile_name}
+        fallback = {'namespace': 'default'}
         for option in ['kms_key_id', 'bucket', 'namespace', 'aws_profile']:
             value = self.get_config(option, ask=ask, fallback=fallback)
             self.config.set_in_profile(self.profile_name, option, value)
@@ -141,7 +148,7 @@ class S3Backed(object):
 
     def get_config(self, option, ask=True, fallback=None):
         val = self.profile.get(option.lower())
-        if val is None:
+        if val == '':
             val = os.environ.get("KEYRING_" + option.upper())
         if fallback and val is None:
             val = fallback.get(option.lower())

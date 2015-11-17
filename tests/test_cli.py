@@ -5,6 +5,9 @@
 #     from pytest.mark import parametrize
 #
 import pytest
+import os
+import tempfile
+import shutil
 from s3keyring import cli
 import uuid
 from click.testing import CliRunner
@@ -13,8 +16,19 @@ from keyring.errors import PasswordDeleteError
 parametrize = pytest.mark.parametrize
 
 
+@pytest.yield_fixture
+def tempdir(scope='module'):
+    dirpath = tempfile.mkdtemp()
+    yield dirpath
+    shutil.rmtree(dirpath)
+
+
 @pytest.fixture
-def keyring(scope='module'):
+def keyring(tempdir, monkeypatch, scope='module'):
+    def mockfunc(*args, **kwargs):
+        return tempdir
+
+    monkeypatch.setattr(os.path, 'expanduser', mockfunc)
     kr = S3Keyring()
     kr.configure(ask=False)
     return kr
