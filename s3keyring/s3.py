@@ -5,7 +5,6 @@
 from __future__ import print_function
 import os
 import base64
-import boto3
 import s3keyring
 from keyring.errors import (PasswordDeleteError)
 from keyring.backend import KeyringBackend
@@ -43,15 +42,8 @@ def supported():
     try:
         kr = S3Keyring()
         kr.configure(ask=False)
-        profile = kr.config.get('default', 'profile')
-        profile = kr.config.get_profile(profile)
-        aws_profile = profile.get('aws_profile', profile)
-        session = boto3.session.Session(profile_name=aws_profile)
-        bucket = profile.get('bucket')
-        if not bucket:
-            return False
-        client = session.client('s3')
-        resp = client.list_objects(Bucket=bucket)
+        client = kr.session.client('s3')
+        resp = client.list_objects(Bucket=kr.bucket.name)
         return resp['ResponseMetadata']['HTTPStatusCode'] == 200
     except:
         return False
@@ -109,10 +101,6 @@ class S3Backed(object):
         return self.profile.get('use_local_keyring', 'no') == 'yes'
 
     @property
-    def region(self):
-        return self.profile['region']
-
-    @property
     def s3(self):
         if self.__s3 is None:
             self.__s3 = self.session.resource('s3')
@@ -129,9 +117,6 @@ class S3Backed(object):
 
     def configure(self, ask=True):
         """Configures the keyring, requesting user input if necessary"""
-        region = self._get_region(ask=ask)
-        self.config.set_in_profile(self.profile_name, 'region', region)
-
         fallback = {'namespace': 'default', 'aws_profile': self.profile_name}
         for option in ['kms_key_id', 'bucket', 'namespace', 'aws_profile']:
             value = self.get_config(option, ask=ask, fallback=fallback)
@@ -144,20 +129,9 @@ class S3Backed(object):
         # Make sure the profile configuration is correct
         self._check_config()
 
-    def _get_region(self, ask=True):
-        """Gets the profile region, maybe requesting user input"""
-        region = self.profile.get('region', '')
-        if region == '':
-            region = os.environ.get('KEYRING_REGION', '')
-        if ask:
-            resp = input("AWS region [{}]: ".format(region))
-            if len(resp) > 0:
-                return resp
-        return region
-
     def _check_config(self):
         """Checks that the configuration is not obviously wrong"""
-        required = ['kms_key_id', 'region', 'bucket']
+        required = ['kms_key_id', 'bucket']
         for option in required:
             val = self.profile.get(option, None)
             if val is None or len(val) == 0:
@@ -166,11 +140,11 @@ class S3Backed(object):
                       file=sys.stderr)
 
     def get_config(self, option, ask=True, fallback=None):
-        val = self.profile.get(option.lower(), '')
-        if val is None or val == '':
-            val = os.environ.get("KEYRING_" + option.upper(), '')
-        if fallback and val == '':
-            val = fallback.get(option.lower(), '')
+        val = self.profile.get(option.lower())
+        if val is None:
+            val = os.environ.get("KEYRING_" + option.upper())
+        if fallback and val is None:
+            val = fallback.get(option.lower())
         if ask:
             resp = input("{} [{}]: ".format(
                 option.replace('_', ' ').title(), val))

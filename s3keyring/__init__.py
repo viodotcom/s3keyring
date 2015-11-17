@@ -41,7 +41,9 @@ class Config:
 
     def get(self, section, param):
         """Get configuration option"""
-        return self.config.get(section, param)
+        val = self.config.get(section, param)
+        if val != '':
+            return val
 
     def get_profile(self, profile_name):
         """Returns a dict-like object with profile options"""
@@ -53,7 +55,7 @@ class Config:
 
     def get_from_profile(self, profile_name, param):
         """Reads a config option for a profile"""
-        return self.read_config("profile:{}".format(profile_name), param)
+        return self.get("profile:{}".format(profile_name), param)
 
     def initialize_profile(self, profile_name):
         """Initializes a profile in the config file"""
@@ -64,6 +66,8 @@ class Config:
         if not self.config.has_section(section):
             self.config.add_section(section)
 
+        if value is None:
+            value = ''
         self.config.set(section, param, value)
         self.save()
 
