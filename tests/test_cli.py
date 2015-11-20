@@ -26,7 +26,7 @@ def cli_runner(scope='module'):
 
 
 @pytest.yield_fixture
-def random_entry(keyring, scope='function'):
+def random_entry(keyring, scope='module'):
     service = str(uuid.uuid4())
     user = str(uuid.uuid4())
     pwd = str(uuid.uuid4())
@@ -38,6 +38,17 @@ def random_entry(keyring, scope='function'):
         if 'not found' not in err.args[0]:
             # It's ok if the entry has been already deleted
             raise
+
+
+@pytest.yield_fixture
+def dummyprofile(keyring, scope='module'):
+    profile = str(uuid.uuid4())
+    yield profile
+    # We need to explicitely reload since the CLI creates its own config object
+    # that points to the same config ini file
+    keyring.config.load()
+    keyring.config.remove_profile(profile)
+    pass
 
 
 @parametrize('helparg', ['--help'])
@@ -53,8 +64,8 @@ class TestCli(object):
         # Assumes the envvars have been set as described in README
         assert result.exit_code == 0
 
-    def test_configure_profile(self, cli_runner):
-        result = cli_runner.invoke(cli.main, ['--profile', 'dummy',
+    def test_configure_profile(self, cli_runner, dummyprofile):
+        result = cli_runner.invoke(cli.main, ['--profile', dummyprofile,
                                               'configure', '--no-ask'])
         # Assumes the envvars have been set as described in README
         assert result.exit_code == 0
@@ -69,6 +80,8 @@ class TestCli(object):
         assert result.exit_code == 0
         pwd = keyring.get_password(*random_entry[:2])
         assert pwd == random_entry[2]
+        keyring.delete_password(*random_entry[:2])
+        assert keyring.get_password(*random_entry[:2]) is None
 
     def test_delete_password(self, cli_runner, random_entry, keyring):
         keyring.set_password(*random_entry)

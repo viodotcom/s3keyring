@@ -7,12 +7,24 @@
 
 import pytest
 import uuid
+import tempfile
+import shutil
+import os
 from s3keyring.s3 import S3Keyring, InitError
 
 
+@pytest.yield_fixture
+def homedir():
+    """A random temporary directory to act as homedir"""
+    dirpath = tempfile.mkdtemp()
+    yield dirpath
+    shutil.rmtree(dirpath)
+
+
 @pytest.fixture
-def keyring(scope='module'):
+def keyring(homedir, monkeypatch, scope='module'):
     """Default keyring, using the default profile"""
+    monkeypatch.setattr(os.path, "expanduser", lambda d: homedir)
     kr = S3Keyring()
     kr.configure(ask=False)
     return kr

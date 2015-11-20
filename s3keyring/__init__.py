@@ -38,6 +38,9 @@ class Config:
         """Save configuration to ini file"""
         with open(self.config_file, 'w') as f:
             self.config.write(f)
+            # Force flushing the file to disk
+            f.flush()
+            os.fsync(f.fileno())
 
     def get(self, section, param):
         """Get configuration option"""
@@ -55,9 +58,9 @@ class Config:
 
     def remove_profile(self, profile_name):
         """Removes a profile, if it exists. Otherwise does nothing."""
-        removed = self.config.remove_section("profile:".format(profile_name))
+        removed = self.config.remove_section("profile:{}".format(profile_name))
         if removed:
-            self.config.save()
+            self.save()
 
     def get_from_profile(self, profile_name, param):
         """Reads a config option for a profile"""
