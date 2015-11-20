@@ -77,6 +77,10 @@ the ``s3keyring`` module.
 Configuration
 -------------
 
+
+Quick configuration
+~~~~~~~~~~~~~~~~~~~
+
 If you haven't done so already, you will need to configure your local
 installation of the AWS SDK by running::
 
@@ -92,6 +96,52 @@ authenticated requests to S3::
 Then you can simply run::
 
     s3keyring configure
+
+
+Configuration using profiles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use ``s3keyring`` to store (read) secrets in (from) more than one 
+backend S3 keyring. A typical use case is creating different keyrings for 
+different user groups that have different levels of trust. For instance you 
+can configure a keyring to store secrets that only administrators can access::
+
+    s3keyring --profile administrators configure
+
+
+Then you can create an independent keyring to store secrets that need to be 
+accessed by EC2 instances associated to the IAM profile ``website-workers``::
+
+    s3keyring --profile website-workers configure
+
+To store and retrieve secrets in the administrators keyring::
+
+    s3keyring --profile administrators set_password service account pwd
+    s3keyring --profile administrators get_password service account
+
+
+And you can obviously do the same for the ``website-workers`` keyring using
+option ``--profile website-workers``.
+
+
+Profile configuration options
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A ``s3keyring`` profile consists of the following options:
+
+* ``kms_key_id``: The ID of the `KMS`_ key that will be used to stored secrets
+  in the associated keyring. You will need to configure KMS in AWS so that the
+  relevant users/groups/profiles have access to this key.
+
+* ``bucket``: The S3 bucket that will hold the keyring. You should associate
+  the minimal access IAM policy mentioned at the beginning of this doc to all
+  users/groups/roles that will access the keyring.
+
+* ``namespace``: The S3 prefix under which the keyring will be stored.
+
+* ``aws_profile``: The `AWS profile`_ to use when accessing AWS services like 
+  KMS and S3. If you intend to use `IAM Roles`_ to grant access to your keyring
+  then you should not specify any ``aws_profile`` (or set it to ``default``).
 
 
 Usage
