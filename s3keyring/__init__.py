@@ -53,6 +53,12 @@ class Config:
                 "Profile {} not found".format(profile_name))
         return self.config[section]
 
+    def remove_profile(self, profile_name):
+        """Removes a profile, if it exists. Otherwise does nothing."""
+        removed = self.config.remove_section("profile:".format(profile_name))
+        if removed:
+            self.config.save()
+
     def get_from_profile(self, profile_name, param):
         """Reads a config option for a profile"""
         return self.get("profile:{}".format(profile_name), param)
