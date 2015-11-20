@@ -98,7 +98,7 @@ Then you can simply run::
     s3keyring configure
 
 
-Configuration using profiles
+Configuration profiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can use ``s3keyring`` to store (read) secrets in (from) more than one 
@@ -120,8 +120,8 @@ To store and retrieve secrets in the administrators keyring::
     s3keyring --profile administrators get_password service account
 
 
-And you can obviously do the same for the ``website-workers`` keyring using
-option ``--profile website-workers``.
+And you could do the same for the ``website-workers`` keyring using option
+``--profile website-workers``.
 
 
 Profile configuration options
@@ -133,6 +133,8 @@ A ``s3keyring`` profile consists of the following options:
   in the associated keyring. You will need to configure KMS in AWS so that the
   relevant users/groups/profiles have access to this key.
 
+.. _KMS: https://aws.amazon.com/es/kms/
+
 * ``bucket``: The S3 bucket that will hold the keyring. You should associate
   the minimal access IAM policy mentioned at the beginning of this doc to all
   users/groups/roles that will access the keyring.
@@ -143,6 +145,8 @@ A ``s3keyring`` profile consists of the following options:
   KMS and S3. If you intend to use `IAM Roles`_ to grant access to your keyring
   then you should not specify any ``aws_profile`` (or set it to ``default``).
 
+.. _AWS profile: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-multiple-profiles
+.. _IAM Roles: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
 
 Usage
 -----
