@@ -188,11 +188,11 @@ Automatic Deployments
 You can configure the ``s3keyring`` module without user input by setting
 the following environment variables in the deployment target:
 
-* ``AWS_REGION``: The AWS region of the keyring bucket
+* ``KEYRING_REGION``: The AWS region of the keyring bucket
 * ``KEYRING_BUCKET``: The name of the bucket that will hold the keyring data.
 * ``KEYRING_NAMESPACE``: The root S3 prefix for the keyring data. If not
   specified, keyring data will be stored under ``s3://$KEYRING_BUCKET/default``
-* ``KMS_KEY_ID``: The ID of the KMS key used to encrypt the keyring secrets.
+* ``KEYRING_KMS_KEY_ID``: The ID of the KMS key used to encrypt the keyring secrets.
 
 If these environment variables are properly set then you can configure the
 ``s3keyring`` module automatically using::
