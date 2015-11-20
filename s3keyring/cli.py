@@ -9,9 +9,7 @@ import s3keyring.s3
 
 
 def setup_keyring(profile_name):
-    kr = s3keyring.s3.S3Keyring(profile_name=profile_name)
-    kr.configure(ask=False)
-    return kr
+    return s3keyring.s3.S3Keyring(profile_name=profile_name)
 
 
 @click.group(name='s3keyring')
