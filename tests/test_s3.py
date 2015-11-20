@@ -6,13 +6,12 @@
 
 
 import pytest
-import s3keyring
 import uuid
-from s3keyring.s3 import S3Keyring, supported, InitError
+from s3keyring.s3 import S3Keyring, InitError
 
 
 @pytest.fixture
-def default_keyring(scope='module'):
+def keyring(scope='module'):
     """Default keyring, using the default profile"""
     kr = S3Keyring()
     kr.configure(ask=False)
@@ -20,9 +19,11 @@ def default_keyring(scope='module'):
 
 
 @pytest.yield_fixture
-def profile(scope='module'):
+def profile(keyring, scope='module'):
     """A dummy keyring profile which is just a clone of the default"""
-    return (str(uuid.uuid4()), dict(s3keyring.read_profile('default')))
+    profile_config = dict(keyring.config.get_profile('test'))
+    profile_tuple = (str(uuid.uuid4()), profile_config)
+    yield profile_tuple
 
 
 @pytest.fixture
@@ -33,25 +34,25 @@ def profile_keyring(profile, scope='module'):
 
 
 class TestS3():
-    pytestmark = pytest.mark.skipif(
-        not supported(), reason="S3 backend not supported or not configured")
-
-    def __init__(self):
-        """Mock the homedir"""
-        # TBD
-        pass
-
     def test_wrong_keyring_initialization(self, profile):
         """Tests that a wrong initialization raises an exception"""
         with pytest.raises(InitError):
             S3Keyring(profile=profile[1])
 
-    def test_configure_profile(self, profile, monkeypatch):
+    def test_configure_profile_with_envars(self, profile, monkeypatch):
         """Configures an additional profile"""
-        bucket_name = str(uuid.uuid4())
-        monkeypatch.setenv('KEYRING_BUCKET', bucket_name)
+        monkeypatch.setenv('KEYRING_BUCKET', profile[1]['bucket'])
+        monkeypatch.setenv('KEYRING_KMS_KEY_ID', profile[1]['kms_key_id'])
+        monkeypatch.setenv('KEYRING_NAMESPACE', profile[1]['namespace'])
         kr = S3Keyring(profile_name=profile[0])
         kr.configure(ask=False)
-        kr.profile['bucket'] == bucket_name
         # The default profile should not have been modified
-        assert s3keyring.config["profile:default"]['bucket'] != profile[0]
+        assert kr.config.get_from_profile('default', 'bucket') != \
+            profile[1]['bucket']
+        # And the new profile should have been created in the ini config file
+        assert kr.config.get_from_profile(profile[0], 'bucket') == \
+            profile[1]['bucket']
+        assert kr.config.get_from_profile(profile[0], 'kms_key_id') == \
+            profile[1]['kms_key_id']
+        assert kr.config.get_from_profile(profile[0], 'namespace') == \
+            profile[1]['namespace']

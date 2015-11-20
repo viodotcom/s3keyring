@@ -37,3 +37,6 @@ babel
 pytz
 alabaster
 sphinx_rtd_theme
+
+# Improved debugger
+pdbpp

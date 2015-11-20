@@ -15,6 +15,7 @@ import string
 import six
 import keyring
 import sys
+import configparser
 
 
 LEGAL_CHARS = (
@@ -35,18 +36,6 @@ class InitError(Exception):
     """Raised when the S3 backend has not been properly initialized
     """
     pass
-
-
-def supported():
-    """Returns True if the S3 backed is supported on this system"""
-    try:
-        kr = S3Keyring()
-        kr.configure(ask=False)
-        client = kr.session.client('s3')
-        resp = client.list_objects(Bucket=kr.bucket.name)
-        return resp['ResponseMetadata']['HTTPStatusCode'] == 200
-    except:
-        return False
 
 
 class S3Backed(object):
@@ -79,13 +68,21 @@ class S3Backed(object):
         # Will store a boto3 Bucket object
         self.__bucket = None
 
+    def supported(self):
+        try:
+            client = self.session.client('s3')
+            resp = client.list_objects(Bucket=self.bucket.name)
+            return resp['ResponseMetadata']['HTTPStatusCode'] == 200
+        except:
+            return False
+
     @property
     def session(self):
         if self.__session is None:
             aws_profile = self.profile.get('aws_profile')
-            if aws_profile == '':
-                # No profile specified: use whatever default credentials
-                # (maybe temporary creds) are set up in this system
+            if aws_profile == '' or aws_profile == 'default':
+                # Use the default creds for this system (maybe temporary
+                # creds from a role)
                 self.__session = Session()
             else:
                 self.__session = Session(
@@ -122,19 +119,42 @@ class S3Backed(object):
         namespace"""
         return _escape_for_s3(self.profile['namespace'])
 
-    def configure(self, ask=True):
+    def configure(self, ask=True, **kwargs):
         """Configures the keyring, requesting user input if necessary"""
         fallback = {'namespace': 'default'}
         for option in ['kms_key_id', 'bucket', 'namespace', 'aws_profile']:
-            value = self.get_config(option, ask=ask, fallback=fallback)
+            value = kwargs.get(option) or \
+                self.get_config(option, ask=ask, fallback=fallback)
             self.config.set_in_profile(self.profile_name, option, value)
 
         # We just updated the ini file: reload
         self.profile = self.config.get_profile(self.profile_name)
-        self.config.load()
 
-        # Make sure the profile configuration is correct
         self._check_config()
+        self._configure_signature()
+
+    def _configure_signature(self):
+        """Sets up the AWS profile to use signature version 4"""
+        aws_profile = self.config.get_from_profile(self.profile_name,
+                                                   'aws_profile')
+        awscli_config_dir = os.path.join(os.path.expanduser('~'), '.aws')
+        if not os.path.isdir(awscli_config_dir):
+            os.makedirs(awscli_config_dir)
+        awscli_config_file = os.path.join(awscli_config_dir, 'config')
+        cfg = configparser.ConfigParser()
+        cfg.read(awscli_config_file)
+        if aws_profile is None or aws_profile == 'default':
+            section = 'default'
+        else:
+            section = "profile " + aws_profile
+
+        if section in cfg.sections():
+            cfg[section]['s3'] = "\nsignature_version = s3v4"
+        else:
+            cfg[section] = {'s3': "\nsignature_version = s3v4"}
+
+        with open(awscli_config_file, 'w') as f:
+            cfg.write(f)
 
     def _check_config(self):
         """Checks that the configuration is not obviously wrong"""
@@ -148,7 +168,7 @@ class S3Backed(object):
 
     def get_config(self, option, ask=True, fallback=None):
         val = self.profile.get(option.lower())
-        if val == '':
+        if val is None or val == '':
             val = os.environ.get("KEYRING_" + option.upper())
         if fallback and val is None:
             val = fallback.get(option.lower())

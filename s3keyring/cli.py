@@ -8,13 +8,17 @@ import click
 import s3keyring.s3
 
 
+def setup_keyring(profile_name):
+    return s3keyring.s3.S3Keyring(profile_name=profile_name)
+
+
 @click.group(name='s3keyring')
 @click.option('--profile', default='default')
 @click.pass_context
 def main(ctx, profile):
     """S3 backend for Python's keyring module
     """
-    ctx.obj = s3keyring.s3.S3Keyring(profile_name=profile)
+    ctx.obj = {'profile': profile}
 
 
 @main.command()
@@ -24,7 +28,7 @@ def configure(ctx, ask):
     """Configure the S3 backend"""
     # If the user specifies an AWS CLI profile, then just read we can from the
     # ~/.aws/credentials and ~/.aws/config files
-    ctx.obj.configure(ask=ask)
+    setup_keyring(ctx.obj['profile']).configure(ask=ask)
 
 
 @main.command()
@@ -33,7 +37,8 @@ def configure(ctx, ask):
 @click.pass_context
 def get(ctx, service, username):
     """Gets a password for a service/username"""
-    click.echo(ctx.obj.get_password(service, username))
+    click.echo(setup_keyring(ctx.obj['profile']).get_password(
+        service, username))
 
 
 @main.command()
@@ -43,7 +48,8 @@ def get(ctx, service, username):
 @click.pass_context
 def set(ctx, service, username, password):
     """Sets a password for a service/username"""
-    click.echo(ctx.obj.set_password(service, username, password))
+    click.echo(setup_keyring(ctx.obj['profile']).set_password(
+        service, username, password))
 
 
 @main.command()
@@ -52,7 +58,8 @@ def set(ctx, service, username, password):
 @click.pass_context
 def delete(ctx, service, username):
     """Deletes a password for a service/username"""
-    click.echo(ctx.obj.delete_password(service, username))
+    click.echo(setup_keyring(ctx.obj['profile']).delete_password(
+        service, username))
 
 
 if __name__ == '__main__':

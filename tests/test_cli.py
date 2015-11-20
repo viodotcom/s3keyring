@@ -5,30 +5,16 @@
 #     from pytest.mark import parametrize
 #
 import pytest
-import os
-import tempfile
-import shutil
 from s3keyring import cli
 import uuid
 from click.testing import CliRunner
-from s3keyring.s3 import S3Keyring, supported
+from s3keyring.s3 import S3Keyring
 from keyring.errors import PasswordDeleteError
 parametrize = pytest.mark.parametrize
 
 
-@pytest.yield_fixture
-def tempdir(scope='module'):
-    dirpath = tempfile.mkdtemp()
-    yield dirpath
-    shutil.rmtree(dirpath)
-
-
 @pytest.fixture
-def keyring(tempdir, monkeypatch, scope='module'):
-    def mockfunc(*args, **kwargs):
-        return tempdir
-
-    monkeypatch.setattr(os.path, 'expanduser', mockfunc)
+def keyring(scope='module'):
     kr = S3Keyring()
     kr.configure(ask=False)
     return kr
@@ -62,10 +48,7 @@ def test_help(helparg, cli_runner):
 
 
 class TestCli(object):
-    pytestmark = pytest.mark.skipif(
-        not supported(), reason="S3 backend not supported or not configured")
-
-    def test_configure_no_ask(self, cli_runner):
+    def test_configure_no_ask(self, cli_runner, keyring):
         result = cli_runner.invoke(cli.main, ['configure', '--no-ask'])
         # Assumes the envvars have been set as described in README
         assert result.exit_code == 0
