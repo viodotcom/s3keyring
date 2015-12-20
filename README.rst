@@ -37,8 +37,8 @@ For Keyring Admins only: setting up the keyring
 If you are just a user of the keyring and someone else has set up the keyring
 for you then you can skip this section and go directly to ``For Keyring Users:
 accessing the keyring`` at the end of this README. Note that you will need 
-administrator privileges in your AWS account to be able to set up a new as 
-described below.
+administrator privileges in your AWS account to be able to set up a new keyring 
+as described below.
 
 
 S3 bucket
@@ -84,13 +84,13 @@ Encryption key
 
 You need to create a `KMS encryption key`_. Write down the ID of the
 KMS key that you create. You will need to communicate this KMS Key ID to all
-keyring users since it is needed to configure the ``s3keyring`` module.
+keyring users.
 
 .. _KMS encryption key: http://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
 
 
-You will need to grant read access to the KMS key to every IAM user or role
-that needs to access the keyring.
+**IMPORTANT**: You will need to grant read access to the KMS key to every IAM
+user or role that needs to access the keyring.
 
 
 For Keyring users: how to access the keyring
