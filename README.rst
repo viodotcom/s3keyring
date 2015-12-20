@@ -44,21 +44,26 @@ need to attach the following `IAM policy`_ to your IAM user account or IAM
 role::
 
     {
+        "Version": "2012-10-17",
         "Statement": [
             {
-                "Action": [
-                    "s3:ListBucket",
-                    "s3:PutObject",
-                    "s3:GetObject"
-                ],
                 "Effect": "Allow",
-                "Resource": [
-                    "arn:aws:s3:::mysecretbucket",
-                    "arn:aws:s3:::mysecretbucket/*"
-                ]
+                "Action": [
+                    "s3:ListBucket"
+                ],
+                "Resource": "arn:aws:s3:::mysecretbucket",
+                "Condition": {}
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:DeleteObject",
+                    "s3:GetObject",
+                    "s3:PutObject"
+                ],
+                "Resource": "arn:aws:s3:::mysecretbucket/*"
             }
-        ],
-        "Version": "2012-10-17"
+        ]
     }
 
 .. _IAM policy: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
