@@ -35,7 +35,7 @@ For Keyring Admins only: setting up the keyring
 ------------------------------------------
 
 If you are just a user of the keyring and someone else has set up the keyring
-for you then you can skip this section and go directly to `For Keyring Users:
+for you then you can skip this section and go directly to ``For Keyring Users:
 accessing the keyring`` at the end of this README. Note that you will need 
 administrator privileges in your AWS account to be able to set up a new as 
 described below.
