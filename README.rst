@@ -31,8 +31,14 @@ Or you can choose to install the development version::
 
 
 
-Prerequisites
-------------
+For Keyring Admins only: setting up the keyring
+------------------------------------------
+
+If you are just a user of the keyring and someone else has set up the keyring
+for you then you can skip this section and go directly to `For Keyring Users:
+accessing the keyring`` at the end of this README. Note that you will need 
+administrator privileges in your AWS account to be able to set up a new as 
+described below.
 
 
 S3 bucket
@@ -40,8 +46,8 @@ S3 bucket
 
 The S3 keyring backend requires you to have read/write access to a S3 bucket.
 If you want to use bucket ``mysecretbucket`` to store your keyring, you will
-need to attach the following `IAM policy`_ to your IAM user account or IAM
-role::
+need to attach the following `IAM policy`_ to all the IAM user accounts or
+roles that will have read and write access to the keyring::
 
     {
         "Version": "2012-10-17",
@@ -68,29 +74,36 @@ role::
 
 .. _IAM policy: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
 
+You can easily create a policy that grants read-only access to the keyring by
+removing the ``s3:PutObject`` and ``s3:DeleteObject`` actions from the policy
+above.
+
 
 Encryption key
 ~~~~~~~~~~~~~~
 
-You will also need to create a `KMS encryption key`_. Write down the ID of the
-KMS key that you create because you will need it later when you configure
-the ``s3keyring`` module.
+You need to create a `KMS encryption key`_. Write down the ID of the
+KMS key that you create. You will need to communicate this KMS Key ID to all
+keyring users since it is needed to configure the ``s3keyring`` module.
 
 .. _KMS encryption key: http://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
 
 
-Configuration
--------------
+You will need to grant read access to the KMS key to every IAM user or role
+that needs to access the keyring.
 
 
-Quick configuration
-~~~~~~~~~~~~~~~~~~~
+For Keyring users: how to access the keyring
+---------------------------------------------
 
-If you haven't done so already, you will need to configure your local
+
+One-time configuration
+~~~~~~~~~~~~~~~~~~~~~~
+
+If you haven't done so already, you will need to configure your local 
 installation of the AWS SDK by running::
 
     aws configure
-
 
 You also need to ensure that you are using version 4 of the AWS Signature for
 authenticated requests to S3::
@@ -102,56 +115,51 @@ Then you can simply run::
 
     s3keyring configure
 
+Your keyring administrator will provide you with the ``KMS Key ID``,
+``Bucket`` and ``Namespace`` configuration options. Option ``AWS profile``
+allows you to specify the local `AWS CLI profile`_ you want to use to sign all
+requests sent to AWS when accessing the keyring. Most users will want to use
+the ``default`` profile. 
+
+.. _AWS CLI profile: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-multiple-profiles
+
+**IMPORTANT**: when deploying the `s3keyring` in EC2 instances that are granted
+access to the keyring by means of an `IAM role` you should not specify a
+custom AWS profile.
+
+.. _IAM role: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+
 
 Configuration profiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can use ``s3keyring`` to store (read) secrets in (from) more than one 
+You can use ``s3keyring`` to store (read) secrets in (from) more than one
 backend S3 keyring. A typical use case is creating different keyrings for 
-different user groups that have different levels of trust. For instance you 
-can configure a keyring to store secrets that only administrators can access::
+different user groups that have different levels of trust. For instance your 
+keyring administrator may have setup a S3 keyring that only IAM users with admin
+privileges can access. Using the bucket, KMS Key ID and namespace provided by 
+your keyring admin you can configure a separate ``s3keyring`` profile to access
+that admins-only keyring::
 
     s3keyring --profile administrators configure
 
-
-Then you can create an independent keyring to store secrets that need to be 
-accessed by EC2 instances associated to the IAM profile ``website-workers``::
+Your keyring admin may have also setup a separate S3 keyring to store secrets 
+that need to be accessed by EC2 instances that act as website workers in a 
+project you are working on. To access that keyring you would configure a 
+second ``s3keyring`` profile::
 
     s3keyring --profile website-workers configure
 
-To store and retrieve secrets in the administrators keyring::
+Then, to store and retrieve secrets in the administrators keyring::
 
-    s3keyring --profile administrators set_password service account pwd
-    s3keyring --profile administrators get_password service account
+    s3keyring --profile administrators set SERVICE ACCOUNT PASSWORD 
+    s3keyring --profile administrators get SERVICE ACCOUNT
 
 
 And you could do the same for the ``website-workers`` keyring using option
 ``--profile website-workers``.
 
 
-Profile configuration options
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A ``s3keyring`` profile consists of the following options:
-
-* ``kms_key_id``: The ID of the `KMS`_ key that will be used to stored secrets
-  in the associated keyring. You will need to configure KMS in AWS so that the
-  relevant users/groups/profiles have access to this key.
-
-.. _KMS: https://aws.amazon.com/es/kms/
-
-* ``bucket``: The S3 bucket that will hold the keyring. You should associate
-  the minimal access IAM policy mentioned at the beginning of this doc to all
-  users/groups/roles that will access the keyring.
-
-* ``namespace``: The S3 prefix under which the keyring will be stored.
-
-* ``aws_profile``: The `AWS profile`_ to use when accessing AWS services like 
-  KMS and S3. If you intend to use `IAM Roles`_ to grant access to your keyring
-  then you should not specify any ``aws_profile`` (or set it to ``default``).
-
-.. _AWS profile: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-multiple-profiles
-.. _IAM Roles: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
 
 Usage
 -----
@@ -185,20 +193,12 @@ You can also use the keyring from the command line::
 Automatic Deployments
 --------------------
 
-You can configure the ``s3keyring`` module without user input by setting
-the following environment variables in the deployment target:
-
-* ``KEYRING_REGION``: The AWS region of the keyring bucket
-* ``KEYRING_BUCKET``: The name of the bucket that will hold the keyring data.
-* ``KEYRING_NAMESPACE``: The root S3 prefix for the keyring data. If not
-  specified, keyring data will be stored under ``s3://$KEYRING_BUCKET/default``
-* ``KEYRING_KMS_KEY_ID``: The ID of the KMS key used to encrypt the keyring secrets.
-
-If these environment variables are properly set then you can configure the
-``s3keyring`` module automatically using::
+You can configure the ``s3keyring`` module without user input by setting the
+following environment variables: ``KEYRING_BUCKET``, ``KEYRING_NAMESPACE``, 
+``KEYRING_KMS_KEY_ID``, ``KEYRING_AWS_PROFILE``. If these environment variables
+are properly set then you can configure the ``s3keyring`` module with::
 
     s3keyring configure --no-ask
-
 
 
 Who do I ask?
