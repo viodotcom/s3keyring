@@ -53,7 +53,7 @@ role::
                 ],
                 "Effect": "Allow",
                 "Resource": [
-                    "arn:aws:s3:::mysecretbucket"
+                    "arn:aws:s3:::mysecretbucket",
                     "arn:aws:s3:::mysecretbucket/*"
                 ]
             }
@@ -172,11 +172,6 @@ You can also use the keyring from the command line::
     s3keyring get service username
     # Delete it
     s3keyring delete service username
-
-
-
-
-
 
 
 .. _keyring module: https://pypi.python.org/pypi/keyring

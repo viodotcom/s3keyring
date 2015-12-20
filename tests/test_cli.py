@@ -15,7 +15,7 @@ parametrize = pytest.mark.parametrize
 
 @pytest.fixture
 def keyring(scope='module'):
-    kr = S3Keyring()
+    kr = S3Keyring(profile_name='test')
     kr.configure(ask=False)
     return kr
 
@@ -60,7 +60,8 @@ def test_help(helparg, cli_runner):
 
 class TestCli(object):
     def test_configure_no_ask(self, cli_runner, keyring):
-        result = cli_runner.invoke(cli.main, ['configure', '--no-ask'])
+        result = cli_runner.invoke(cli.main, ['--profile', 'test',
+                                              'configure', '--no-ask'])
         # Assumes the envvars have been set as described in README
         assert result.exit_code == 0
 
@@ -76,7 +77,8 @@ class TestCli(object):
         assert 'Kms Key Id' in result.output
 
     def test_set_password(self, cli_runner, random_entry, keyring):
-        result = cli_runner.invoke(cli.main, ['set'] + list(random_entry))
+        result = cli_runner.invoke(cli.main, ['--profile', 'test', 'set'] +
+                                   list(random_entry))
         assert result.exit_code == 0
         pwd = keyring.get_password(*random_entry[:2])
         assert pwd == random_entry[2]
@@ -86,7 +88,7 @@ class TestCli(object):
     def test_delete_password(self, cli_runner, random_entry, keyring):
         keyring.set_password(*random_entry)
         assert random_entry[2] == keyring.get_password(*random_entry[:2])
-        result = cli_runner.invoke(cli.main, ['delete'] +
+        result = cli_runner.invoke(cli.main, ['--profile', 'test', 'delete'] +
                                    list(random_entry)[:2])
         assert result.exit_code == 0
         assert keyring.get_password(*random_entry[:2]) is None

@@ -8,4 +8,4 @@ from s3keyring import s3
 
 class S3PlaintextKeychainTestCase(BackendBasicTests, unittest.TestCase):
     def init_keyring(self):
-        return s3.S3Keyring()
+        return s3.S3Keyring(profile_name='test')

@@ -23,9 +23,9 @@ def homedir():
 
 @pytest.fixture
 def keyring(homedir, monkeypatch, scope='module'):
-    """Default keyring, using the default profile"""
+    """Default keyring, using the test profile"""
     monkeypatch.setattr(os.path, "expanduser", lambda d: homedir)
-    kr = S3Keyring()
+    kr = S3Keyring(profile_name='test')
     kr.configure(ask=False)
     return kr
 
@@ -33,7 +33,12 @@ def keyring(homedir, monkeypatch, scope='module'):
 @pytest.yield_fixture
 def profile(keyring, scope='module'):
     """A dummy keyring profile which is just a clone of the default"""
-    profile_config = dict(keyring.config.get_profile('test'))
+    profile_config = {
+        'bucket': str(uuid.uuid4()),
+        'namespace': str(uuid.uuid4()),
+        'kms_key_id': str(uuid.uuid4()),
+        'user_local_keyring': 'no',
+        'aws_profile': str(uuid.uuid4())}
     profile_tuple = (str(uuid.uuid4()), profile_config)
     yield profile_tuple
 

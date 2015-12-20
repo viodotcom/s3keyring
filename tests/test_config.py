@@ -8,7 +8,7 @@ from s3keyring.s3 import S3Keyring
 
 @pytest.fixture
 def config(scope='module'):
-    return S3Keyring().config
+    return S3Keyring(profile_name='test').config
 
 
 @pytest.yield_fixture
