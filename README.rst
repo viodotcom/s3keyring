@@ -196,6 +196,7 @@ You can access your S3 keyring programmatically from your Python code like
 this::
 
 .. code:: python
+
     from s3keyring.s3 import S3Keyring
     kr = S3Keyring()
     kr.set_password('service', 'username', '123456')
@@ -222,7 +223,7 @@ Recommended workflow
 
 This is how I use ``s3keyring`` in my Python projects:
 
-1. In the project root directory I run:
+1. In the project root directory I run::
 
 .. code:: bash
 
@@ -235,6 +236,7 @@ This is how I use ``s3keyring`` in my Python projects:
    the code below in ``my_module/__init__.py``::
 
 .. code:: python
+
     import os
     import inspect
     from s3keyring.s3 import S3Keyring
@@ -247,6 +249,7 @@ This is how I use ``s3keyring`` in my Python projects:
 3. Then in my project code I store and retrieve secrets as follows::
 
 .. code:: python
+
     from my_module import keyring
 
     keyring.set_password('service', 'username', '123456')
