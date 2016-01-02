@@ -224,7 +224,7 @@ This is how I use ``s3keyring`` in my Python projects:
 
 1. In the project root directory I run:
 
-.. code:: python
+.. code:: bash
 
     s3keyring --config ./.s3keyring.ini configure
 
@@ -233,6 +233,8 @@ This is how I use ``s3keyring`` in my Python projects:
 
 3. If my project code is contained in a module ``my_module``, I paste the
    the code below in ``my_module/__init__.py``::
+
+.. code:: python
 
     import os
     import inspect
