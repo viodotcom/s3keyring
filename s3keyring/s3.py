@@ -5,12 +5,12 @@
 from __future__ import print_function
 import os
 import base64
-import s3keyring
+from s3keyring.config import Config
 from keyring.errors import (PasswordDeleteError)
 from keyring.backend import KeyringBackend
 from boto3.session import Session
 from botocore.exceptions import EndpointConnectionError
-from s3keyring import ProfileNotFoundError
+from s3keyring.exceptions import ProfileNotFoundError
 import string
 import six
 import keyring
@@ -41,7 +41,7 @@ class InitError(Exception):
 class S3Backed(object):
     def __init__(self, profile=None, profile_name=None):
         """Creates a S3 bucket for the backend if one does not exist already"""
-        self.config = s3keyring.Config()
+        self.config = Config()
 
         if profile_name is None:
             # There must be a profile associated to a keyring
