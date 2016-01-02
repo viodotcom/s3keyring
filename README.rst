@@ -182,7 +182,7 @@ you can also tell s3keyring to use a custom configuration file. In the CLI::
 
 When using the module API::
 
-.. code:: python
+.. code-block:: python
 
     from s3keyring.s3 import S3Keyring
     kr = S3Keyring(config_file='/path/to/custom_config_file.ini')
