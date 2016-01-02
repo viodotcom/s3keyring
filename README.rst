@@ -130,6 +130,15 @@ custom AWS profile.
 .. _IAM role: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
 
 
+You can configure the ``s3keyring`` module without user input by setting the
+following environment variables: ``KEYRING_BUCKET``, ``KEYRING_NAMESPACE``, 
+``KEYRING_KMS_KEY_ID``, ``KEYRING_AWS_PROFILE``. If these environment variables
+are properly set then you can configure the ``s3keyring`` module with::
+
+    s3keyring configure --no-ask
+
+
+
 Configuration profiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -163,8 +172,8 @@ And you could do the same for the ``website-workers`` keyring using option
 Custom configuration files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default `s3keyring` configuration is store in ``~/.s3keyring``. However, 
-you can also specify s3keyring to use a custom configuration file. In the CLI::
+By default `s3keyring` configuration is store in ``~/.s3keyring.ini``. However, 
+you can also tell s3keyring to use a custom configuration file. In the CLI::
 
     # Store the configuration in a custom config file
     s3keyring --config /path/to/custom_config_file.ini configure
@@ -208,15 +217,36 @@ You can also use the keyring from the command line::
 .. _keyring module: https://pypi.python.org/pypi/keyring
 
 
-Automatic Deployments
---------------------
+Recommended workflow
+~~~~~~~~~~~~~~~~~~~~
 
-You can configure the ``s3keyring`` module without user input by setting the
-following environment variables: ``KEYRING_BUCKET``, ``KEYRING_NAMESPACE``, 
-``KEYRING_KMS_KEY_ID``, ``KEYRING_AWS_PROFILE``. If these environment variables
-are properly set then you can configure the ``s3keyring`` module with::
+This is how I use ``s3keyring`` in my Python projects:
 
-    s3keyring configure --no-ask
+1. In the project root directory I run::
+
+   s3keyring --config ./.s3keyring.ini configure
+
+2. I keep the generated ``.s3keyring.ini`` file as part of my project source
+   code (i.e. under version control).
+
+3. If my project code is contained in a module ``my_module``, I paste the
+   the code below in ``my_module/__init__.py``::
+
+   import os
+   import inspect
+   from s3keyring.s3 import S3Keyring
+
+   __module_dir__ = os.path.dirname(inspect.getfile(inspect.currentframe()))
+   __s3keyring_config_file__ = os.path.join(__module_dir__, '.s3keyring.ini')
+   keyring = S3Keyring(config_file=__s3keyring_config_file__)
+
+
+3. Then in my project code I store and retrieve secrets as follows::
+
+   from my_module import keyring
+
+   keyring.set_password('service', 'username', '123456')
+   assert keyring.get_password('service', 'username') == '123456'
 
 
 Who do I ask?
