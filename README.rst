@@ -222,7 +222,9 @@ Recommended workflow
 
 This is how I use ``s3keyring`` in my Python projects:
 
-1. In the project root directory I run::
+1. In the project root directory I run:
+
+.. code:: python
 
     s3keyring --config ./.s3keyring.ini configure
 
