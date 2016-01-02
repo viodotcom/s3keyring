@@ -4,5 +4,3 @@
 
 class ProfileNotFoundError(Exception):
     pass
-
-
