@@ -39,9 +39,9 @@ class InitError(Exception):
 
 
 class S3Backed(object):
-    def __init__(self, profile=None, profile_name=None):
+    def __init__(self, profile=None, profile_name=None, config_file=None):
         """Creates a S3 bucket for the backend if one does not exist already"""
-        self.config = Config()
+        self.config = Config(config_file=config_file)
 
         if profile_name is None:
             # There must be a profile associated to a keyring

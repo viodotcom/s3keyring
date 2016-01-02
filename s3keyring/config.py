@@ -14,13 +14,14 @@ class Config:
 
         if config_file is None:
             # The default config file is ~/.s3keyring.ini
-            self.config_file = os.path.join(os.path.expanduser('~'),
-                                            '.s3keyring.ini')
+            config_file = os.path.join(os.path.expanduser('~'),
+                                       '.s3keyring.ini')
 
-        if not os.path.isfile(self.config_file):
-            shutil.copyfile(s3keyring.__default_config_file__,
-                            self.config_file)
+        if not os.path.isfile(config_file):
+            shutil.copyfile(s3keyring.__default_config_file__, config_file)
+
         self.config = configparser.ConfigParser()
+        self.config_file = config_file
         self.load()
 
     def load(self):
