@@ -224,7 +224,7 @@ This is how I use ``s3keyring`` in my Python projects:
 
 1. In the project root directory I run::
 
-   s3keyring --config ./.s3keyring.ini configure
+    s3keyring --config ./.s3keyring.ini configure
 
 2. I keep the generated ``.s3keyring.ini`` file as part of my project source
    code (i.e. under version control).
@@ -232,21 +232,21 @@ This is how I use ``s3keyring`` in my Python projects:
 3. If my project code is contained in a module ``my_module``, I paste the
    the code below in ``my_module/__init__.py``::
 
-   import os
-   import inspect
-   from s3keyring.s3 import S3Keyring
-
-   __module_dir__ = os.path.dirname(inspect.getfile(inspect.currentframe()))
-   __s3keyring_config_file__ = os.path.join(__module_dir__, '.s3keyring.ini')
-   keyring = S3Keyring(config_file=__s3keyring_config_file__)
+    import os
+    import inspect
+    from s3keyring.s3 import S3Keyring
+    
+    __module_dir__ = os.path.dirname(inspect.getfile(inspect.currentframe()))
+    __s3keyring_config_file__ = os.path.join(__module_dir__, '.s3keyring.ini')
+    keyring = S3Keyring(config_file=__s3keyring_config_file__)
 
 
 3. Then in my project code I store and retrieve secrets as follows::
 
-   from my_module import keyring
+    from my_module import keyring
 
-   keyring.set_password('service', 'username', '123456')
-   assert keyring.get_password('service', 'username') == '123456'
+    keyring.set_password('service', 'username', '123456')
+    assert keyring.get_password('service', 'username') == '123456'
 
 
 Who do I ask?
