@@ -182,6 +182,8 @@ you can also tell s3keyring to use a custom configuration file. In the CLI::
 
 When using the module API::
 
+.. code:: python
+
     from s3keyring.s3 import S3Keyring
     kr = S3Keyring(config_file='/path/to/custom_config_file.ini')
     kr.get_password('service', 'username')
@@ -251,7 +253,7 @@ This is how I use ``s3keyring`` in my Python projects:
 .. code:: python
 
     from my_module import keyring
-
+    
     keyring.set_password('service', 'username', '123456')
     assert keyring.get_password('service', 'username') == '123456'
 
