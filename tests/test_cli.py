@@ -7,6 +7,8 @@
 import pytest
 from s3keyring import cli
 import uuid
+import os
+import tempfile
 from click.testing import CliRunner
 from s3keyring.s3 import S3Keyring
 from keyring.errors import PasswordDeleteError
@@ -41,6 +43,14 @@ def random_entry(keyring, scope='module'):
 
 
 @pytest.yield_fixture
+def dummy_config_file():
+    filename = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
+    yield filename
+    if os.path.isfile(filename):
+        os.remove(filename)
+
+
+@pytest.yield_fixture
 def dummyprofile(keyring, scope='module'):
     profile = str(uuid.uuid4())
     yield profile
@@ -67,6 +77,12 @@ class TestCli(object):
 
     def test_configure_profile(self, cli_runner, dummyprofile):
         result = cli_runner.invoke(cli.main, ['--profile', dummyprofile,
+                                              'configure', '--no-ask'])
+        # Assumes the envvars have been set as described in README
+        assert result.exit_code == 0
+
+    def test_custom_config_file(self, cli_runner, dummy_config_file):
+        result = cli_runner.invoke(cli.main, ['--config', dummy_config_file,
                                               'configure', '--no-ask'])
         # Assumes the envvars have been set as described in README
         assert result.exit_code == 0
