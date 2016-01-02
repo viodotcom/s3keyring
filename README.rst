@@ -236,8 +236,6 @@ I keep the generated ``.s3keyring.ini`` file as part of my project source code
 (i.e. under version control). Then I paste the the code below in 
 ``my_module/__init__.py``::
 
-.. code:: python
-
     import os
     import inspect
     from s3keyring.s3 import S3Keyring
@@ -248,8 +246,6 @@ I keep the generated ``.s3keyring.ini`` file as part of my project source code
 
 
 Then in my project code I store and retrieve secrets as follows::
-
-.. code:: python
 
     from my_module import keyring
     
