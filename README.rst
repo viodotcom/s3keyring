@@ -219,19 +219,22 @@ You can also use the keyring from the command line::
 Recommended workflow
 ~~~~~~~~~~~~~~~~~~~~
 
-This is how I use ``s3keyring`` in my Python projects:
+This is how I use ``s3keyring`` in my Python projects.
 
-1. In the project root directory I run::
+Let's assume that my project root directory looks something like this::
 
-.. code:: bash
+   setup.py
+   my_module/
+             __init__.py
 
-    s3keyring --config ./.s3keyring.ini configure
 
-2. I keep the generated ``.s3keyring.ini`` file as part of my project source
-   code (i.e. under version control).
+In my project root directory I run::
 
-3. If my project code is contained in a module ``my_module``, I paste the
-   the code below in ``my_module/__init__.py``::
+    s3keyring --config my_module/.s3keyring.ini configure
+
+I keep the generated ``.s3keyring.ini`` file as part of my project source code
+(i.e. under version control). Then I paste the the code below in 
+``my_module/__init__.py``::
 
 .. code:: python
 
@@ -244,7 +247,7 @@ This is how I use ``s3keyring`` in my Python projects:
     keyring = S3Keyring(config_file=__s3keyring_config_file__)
 
 
-3. Then in my project code I store and retrieve secrets as follows::
+Then in my project code I store and retrieve secrets as follows::
 
 .. code:: python
 
