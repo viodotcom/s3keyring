@@ -257,11 +257,9 @@ setup_dict = dict(
     package_data = {'': ['*.ini']},
     install_requires=[
         'click>=5.1',
-        'future',
         'keyring',
-        'boto3>=1.1.4',
-        'awscli>=1.8.12',
-        'six>=1.10.0'
+        'boto3',
+        'awscli',
     ] + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
     tests_require=[
