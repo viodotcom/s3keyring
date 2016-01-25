@@ -45,10 +45,10 @@ class Config:
     def get_profile(self, profile_name):
         """Returns a dict-like object with profile options"""
         section = "profile:{}".format(profile_name)
-        if section not in self.config:
+        if not self.config.has_section(section):
             raise ProfileNotFoundError(
                 "Profile {} not found".format(profile_name))
-        return self.config[section]
+        return dict(self.config.items(section))
 
     def remove_profile(self, profile_name):
         """Removes a profile, if it exists. Otherwise does nothing."""
