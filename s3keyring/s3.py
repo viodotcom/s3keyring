@@ -10,6 +10,7 @@ from keyring.errors import (PasswordDeleteError)
 from keyring.backend import KeyringBackend
 from boto3.session import Session
 from botocore.exceptions import EndpointConnectionError
+from botocore.client import Config as BotoConfig
 from s3keyring.exceptions import ProfileNotFoundError
 import string
 import six
@@ -97,7 +98,7 @@ class S3Backed(object):
     def bucket(self):
         if self.__bucket is None:
             bucket_name = self.profile['bucket']
-            self.__bucket = self.session.resource('s3').Bucket(bucket_name)
+            self.__bucket = self.session.resource('s3', config=BotoConfig(signature_version='s3v4')).Bucket(bucket_name)
         return self.__bucket
 
     @property
