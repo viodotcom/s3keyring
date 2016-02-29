@@ -260,6 +260,7 @@ setup_dict = dict(
         'keyring',
         'boto3>=1.2.3',
         'awscli',
+        'configparser'
     ] + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
     tests_require=[

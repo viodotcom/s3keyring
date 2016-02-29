@@ -22,6 +22,7 @@ Pygments==1.6
 Paver==1.2.1
 colorama==0.2.7
 ipython
+configparser==3.5.0b2
 
 # Cli
 Click==5.1
