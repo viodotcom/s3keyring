@@ -11,7 +11,7 @@ import os
 
 def _get_default_config_file():
     """Gets the full path to the default config file"""
-    project_file = os.path.join(os.path.curdir, '.s3keyring.ini')
+    project_file = os.path.join(os.path.curdir, 's3keyring.ini')
     if os.path.isfile(project_file):
         return project_file
     else:
