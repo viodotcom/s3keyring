@@ -1,0 +1,12 @@
+# test requirements
+pytest
+pytest-cov
+pylama
+pylama_pylint
+tox
+mock
+
+-e .
+
+# Install non-recommended keyring backends (for travis)
+keyrings.alt
