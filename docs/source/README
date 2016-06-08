@@ -1,5 +1,0 @@
-Run `sphinx-apidoc -o . ../../s3keyring' in this directory.
-
-This will generate `modules.rst' and `s3keyring.rst'.
-
-Then include `modules.rst' in your `index.rst' file.

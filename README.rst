@@ -1,9 +1,10 @@
-================================
 S3 backend for Python's keyring
 ================================
 
-.. image:: https://circleci.com/gh/InnovativeTravel/s3-keyring.svg?style=svg
-    :target: https://circleci.com/gh/InnovativeTravel/s3-keyring
+.. image:: https://travis-ci.org/FindHotel/s3keyring.svg?branch=master
+    :target: https://travis-ci.org/FindHotel/s3keyring
+.. |PyPI| image:: https://img.shields.io/pypi/v/s3keyring.svg?style=flat
+   :target: https://pypi.python.org/pypi/s3keyring
 
 This module adds an `AWS S3`_ backend to Python's keyring_ module. The S3
 backend will store the keyring credentials in an S3 bucket and use client and
@@ -20,7 +21,7 @@ finely tuned using AWS IAM policies.
 Installation
 ------------
 
-You can install a stable release from Pipy::
+You can install a stable release from Pypi::
 
     pip install s3keyring
 
@@ -31,14 +32,16 @@ Or you can choose to install the development version::
 
 
 
-For Keyring Admins only: setting up the keyring
-------------------------------------------
+For Admins: setting up the keyring
+------------------------------------------------
 
 If you are just a user of the keyring and someone else has set up the keyring
 for you then you can skip this section and go directly to ``For Keyring Users:
 accessing the keyring`` at the end of this README. Note that you will need 
 administrator privileges in your AWS account to be able to set up a new keyring 
 as described below.
+
+
 
 
 S3 bucket
@@ -79,6 +82,8 @@ removing the ``s3:PutObject`` and ``s3:DeleteObject`` actions from the policy
 above.
 
 
+
+
 Encryption key
 ~~~~~~~~~~~~~~
 
@@ -93,7 +98,9 @@ keyring users.
 user or role that needs to access the keyring.
 
 
-For Keyring users: how to access the keyring
+
+
+For users: accessing the keyring
 ---------------------------------------------
 
 
@@ -169,22 +176,22 @@ And you could do the same for the ``website-workers`` keyring using option
 ``--profile website-workers``.
 
 
-Custom configuration files
+
+
+Configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default `s3keyring` configuration is store in ``~/.s3keyring.ini``. However, 
-you can also tell s3keyring to use a custom configuration file. In the CLI::
+By default ``s3keyring`` reads configuration options from ``~/.s3keyring.ini``.
+You can also store the configuration in a ``.s3keyring.ini`` file stored in your
+current working directory by using::
 
-    # Store the configuration in a custom config file
-    s3keyring --config /path/to/custom_config_file.ini configure
-    # Read the configuration from a custom config file
-    s3keyring --config /path/to/custom_config_file.ini get SERVICE ACCOUNT
+    s3keyring configure --local
 
-When using the module API::
 
-    from s3keyring.s3 import S3Keyring
-    kr = S3Keyring(config_file='/path/to/custom_config_file.ini')
-    kr.get_password('service', 'username')
+``s3keyring`` will always read the configuration first from a ``.s3keyring.ini``
+file under your current work directory. If it is not found then it will read it
+from ``~/.s3keyring.ini``.
+
 
 
 
@@ -216,6 +223,7 @@ You can also use the keyring from the command line::
 .. _keyring module: https://pypi.python.org/pypi/keyring
 
 
+
 Recommended workflow
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -230,30 +238,33 @@ Let's assume that my project root directory looks something like this::
 
 In my project root directory I run::
 
-    s3keyring --config my_module/.s3keyring.ini configure
+    s3keyring configure --local
 
 I keep the generated ``.s3keyring.ini`` file as part of my project source code
-(i.e. under version control). Then I paste the the code below in 
-``my_module/__init__.py``::
+(i.e. under version control). Then::
 
-    import os
-    import inspect
     from s3keyring.s3 import S3Keyring
-    
-    __module_dir__ = os.path.dirname(inspect.getfile(inspect.currentframe()))
-    __s3keyring_config_file__ = os.path.join(__module_dir__, '.s3keyring.ini')
-    keyring = S3Keyring(config_file=__s3keyring_config_file__)
 
-
-Then in my project code I store and retrieve secrets as follows::
-
-    from my_module import keyring
-    
+    keyring = S3Keyring(config_file="/path/to/s3keyring.ini")
     keyring.set_password('service', 'username', '123456')
     assert keyring.get_password('service', 'username') == '123456'
 
 
-Who do I ask?
--------------
 
-* German Gomez-Herrero, <german@innovativetravel.eu>
+Contact
+-------
+
+If you have questions, bug reports, suggestions, etc. please create an issue on
+the `GitHub project page <http://github.com/findhotel/s3keyring>`_.
+
+
+
+License
+-------
+
+This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_
+
+See `License file <https://github.com/findhotel/s3keyring/blob/master/LICENSE.txt>`_
+
+
+© 2016 German Gomez-Herrero, and FindHotel.
