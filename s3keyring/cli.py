@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Command line interface"""
 
 from __future__ import print_function
 
 import click
 import s3keyring.s3
+from s3keyring.settings import config
 import os
 
 
@@ -19,26 +18,25 @@ def _get_default_config_file():
 
 
 @click.group(name='s3keyring')
-@click.option('--profile', default='default')
-@click.option('--config', default=_get_default_config_file(),
-              metavar='CONFIG_FILE',
-              help="The location of the s3keyring configuration file.")
+@click.option("--profile", default='default', metavar='NAME',
+              help="The name of configuration profile.")
 @click.pass_context
-def main(ctx, profile, config):
-    """S3 backend for Python's keyring module
-    """
-    kr = s3keyring.s3.S3Keyring(profile_name=profile, config_file=config)
+def main(ctx, profile):
+    """S3 backend for Python's keyring module."""
+    config.boto_config.activate_profile(profile)
+    kr = s3keyring.s3.S3Keyring()
     ctx.obj = {'keyring': kr}
 
 
 @main.command()
 @click.option('--ask/--no-ask', default=True)
+@click.option("--local/--no-local",
+              help="Save configuration in a file under the current directory",
+              default=False)
 @click.pass_context
-def configure(ctx, ask):
-    """Configure the S3 backend"""
-    # If the user specifies an AWS CLI profile, then just read we can from the
-    # ~/.aws/credentials and ~/.aws/config files
-    ctx.obj['keyring'].configure(ask=ask)
+def configure(ctx, ask, local):
+    """Configure the S3 backend."""
+    config.boto_config.configure(ask=ask, local=local)
 
 
 @main.command()
@@ -46,7 +44,7 @@ def configure(ctx, ask):
 @click.argument('username')
 @click.pass_context
 def get(ctx, service, username):
-    """Gets a password for a service/username"""
+    """Get password for a service/username."""
     click.echo(ctx.obj['keyring'].get_password(service, username))
 
 
@@ -56,7 +54,7 @@ def get(ctx, service, username):
 @click.argument('password')
 @click.pass_context
 def set(ctx, service, username, password):
-    """Sets a password for a service/username"""
+    """Set a password for a service/username."""
     click.echo(ctx.obj['keyring'].set_password(service, username, password))
 
 
@@ -65,7 +63,7 @@ def set(ctx, service, username, password):
 @click.argument('username')
 @click.pass_context
 def delete(ctx, service, username):
-    """Deletes a password for a service/username"""
+    """Deletes a password for a service/username."""
     click.echo(ctx.obj['keyring'].delete_password(service, username))
 
 

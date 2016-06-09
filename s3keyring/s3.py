@@ -3,19 +3,18 @@
 
 
 from __future__ import print_function
-import os
 import base64
-from s3keyring.config import Config
+
 from keyring.errors import (PasswordDeleteError)
 from keyring.backend import KeyringBackend
-from boto3.session import Session
 from botocore.exceptions import EndpointConnectionError
-from s3keyring.exceptions import ProfileNotFoundError
+import boto3facade.s3
 import string
 import six
 import keyring
 import sys
-import configparser
+
+from s3keyring.settings import config
 
 
 LEGAL_CHARS = (
@@ -39,145 +38,38 @@ class InitError(Exception):
 
 
 class S3Backed(object):
-    def __init__(self, profile=None, profile_name=None, config_file=None):
-        """Creates a S3 bucket for the backend if one does not exist already"""
-        self.config = Config(config_file=config_file)
+    def __init__(self, config_file=None):
+        """Initialize the keyring."""
 
-        if profile_name is None:
-            # There must be a profile associated to a keyring
-            self.profile_name = self.config.get('default', 'profile')
-        else:
-            self.profile_name = profile_name
+        if config_file:
+            config.boto_config.config_file = config_file
+            config.boto_config.load()
 
-        if profile is None:
-            # Either the user passes the profile as a dict, or must be read
-            # from the config file.
-            try:
-                self.profile = self.config.get_profile(self.profile_name)
-            except ProfileNotFoundError:
-                self.config.initialize_profile(self.profile_name)
-                self.profile = self.config.get_profile(self.profile_name)
-        elif profile_name is None:
-            raise InitError("You must provide parameter 'profile_name' when "
-                            "providing a 'profile'")
-        else:
-            self.profile = profile
+        self.s3 = boto3facade.s3.S3(config=config.boto_config)
 
-        self.__s3 = None
-        self.__session = None
-        # Will store a boto3 Bucket object
-        self.__bucket = None
+    @property
+    def bucket(self):
+        return self.s3.resource.Bucket(config.profile["bucket"])
 
     def supported(self):
         try:
-            client = self.session.client('s3')
-            resp = client.list_objects(Bucket=self.bucket.name)
+            resp = self.s3.client.list_objects(Bucket=self.bucket.name)
             return resp['ResponseMetadata']['HTTPStatusCode'] == 200
         except:
             return False
 
     @property
-    def session(self):
-        if self.__session is None:
-            aws_profile = self.profile.get('aws_profile')
-            if aws_profile == '' or aws_profile == 'default':
-                # Use the default creds for this system (maybe temporary
-                # creds from a role)
-                self.__session = Session()
-            else:
-                self.__session = Session(
-                    profile_name=self.profile.get('aws_profile'))
-        return self.__session
-
-    @property
     def kms_key_id(self):
-        return self.profile['kms_key_id']
-
-    @property
-    def bucket(self):
-        if self.__bucket is None:
-            bucket_name = self.profile['bucket']
-            self.__bucket = self.session.resource('s3').Bucket(bucket_name)
-        return self.__bucket
+        return config.profile["kms_key_id"]
 
     @property
     def use_local_keyring(self):
-        return self.profile.get('use_local_keyring', 'no') == 'yes'
-
-    @property
-    def s3(self):
-        if self.__s3 is None:
-            self.__s3 = self.session.resource('s3')
-        return self.__s3
+        return config.profile.get("use_local_keyring", "no") == 'yes'
 
     @property
     def namespace(self):
-        """Namespaces allow you to have multiple keyrings backed by the same
-        S3 bucket by separating them with different S3 prefixes. Different
-        access permissions can then be given to different prefixes so that
-        only the right IAM roles/users/groups have access to a keychain
-        namespace"""
-        return _escape_for_s3(self.profile['namespace'])
-
-    def configure(self, ask=True, **kwargs):
-        """Configures the keyring, requesting user input if necessary"""
-        fallback = {'namespace': 'default'}
-        for option in ['kms_key_id', 'bucket', 'namespace', 'aws_profile']:
-            value = kwargs.get(option) or \
-                self.get_config(option, ask=ask, fallback=fallback)
-            self.config.set_in_profile(self.profile_name, option, value)
-
-        # We just updated the ini file: reload
-        self.profile = self.config.get_profile(self.profile_name)
-
-        self._check_config()
-        self._configure_signature()
-
-    def _configure_signature(self):
-        """Sets up the AWS profile to use signature version 4"""
-        aws_profile = self.config.get_from_profile(self.profile_name,
-                                                   'aws_profile')
-        awscli_config_dir = os.path.join(os.path.expanduser('~'), '.aws')
-        if not os.path.isdir(awscli_config_dir):
-            os.makedirs(awscli_config_dir)
-        awscli_config_file = os.path.join(awscli_config_dir, 'config')
-        cfg = configparser.ConfigParser()
-        cfg.read(awscli_config_file)
-        if aws_profile is None or aws_profile == 'default':
-            section = 'default'
-        else:
-            section = "profile " + aws_profile
-
-        if section in cfg.sections():
-            cfg[section]['s3'] = "\nsignature_version = s3v4"
-        else:
-            cfg[section] = {'s3': "\nsignature_version = s3v4"}
-
-        with open(awscli_config_file, 'w') as f:
-            cfg.write(f)
-
-    def _check_config(self):
-        """Checks that the configuration is not obviously wrong"""
-        required = ['kms_key_id', 'bucket']
-        for option in required:
-            val = self.profile.get(option, None)
-            if val is None or len(val) == 0:
-                print("WARNING: {} is required. You must run s3keyring "
-                      "configure again.".format(option),
-                      file=sys.stderr)
-
-    def get_config(self, option, ask=True, fallback=None):
-        val = self.profile.get(option.lower())
-        if val is None or val == '':
-            val = os.environ.get("KEYRING_" + option.upper())
-        if fallback and val is None:
-            val = fallback.get(option.lower())
-        if ask:
-            resp = input("{} [{}]: ".format(
-                option.replace('_', ' ').title(), val))
-            if len(resp) > 0:
-                return resp
-        return val
+        """A namespace is simply a shared S3 prefix across a set of keys."""
+        return _escape_for_s3(config.profile["namespace"])
 
 
 class S3Keyring(S3Backed, KeyringBackend):

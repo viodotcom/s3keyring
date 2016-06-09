@@ -1,0 +1,3 @@
+ipython
+
+-r requirements-test.txt
