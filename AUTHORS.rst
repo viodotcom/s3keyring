@@ -6,4 +6,4 @@ Authors
 
 These people have contributed to ``s3keyring``, in alphabetical order:
 
-* Ilya Kalinin
+* `Ilya Kalinin <https://github.com/ikalinin>`_
