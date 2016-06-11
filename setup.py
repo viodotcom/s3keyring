@@ -29,7 +29,7 @@ setup(
     install_requires=[
         "click>=5.1",
         "keyring",
-        "boto3facade>=0.2.5",
+        "boto3facade>=0.2.8",
         "awscli",
     ],
     classifiers=[
