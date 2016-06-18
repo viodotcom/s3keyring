@@ -3,6 +3,7 @@ S3 backend for Python's keyring
 
 .. image:: https://travis-ci.org/FindHotel/s3keyring.svg?branch=master
     :target: https://travis-ci.org/FindHotel/s3keyring
+
 .. |PyPI| image:: https://img.shields.io/pypi/v/s3keyring.svg?style=flat
    :target: https://pypi.python.org/pypi/s3keyring
 
