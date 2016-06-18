@@ -82,16 +82,25 @@ class S3Keyring(S3Backed, KeyringBackend):
     """
 
     def _get_s3_key(self, service, username):
-        """The S3 key where the secret will be stored"""
+        """The S3 key where the secret will be stored."""
         return "{}/{}/{}/secret.b64".format(self.namespace, service, username)
+
+    def _get_service_prefix(self, service):
+        """Get the S3 prefix for a given service."""
+        return "{}/{}".format(self.namespace, service)
 
     def get_value(self, *args, **kwargs):
         """An alias of method get_password"""
         return self.get_password(*args, **kwargs)
 
+    def list_keys(self, service):
+        """List the keys associated to a given service."""
+        prefix = self._get_service_prefix(service)
+        return [x.key[len(prefix)+1:-11] for x
+                in list(self.bucket.objects.filter(Prefix=prefix))]
+
     def get_password(self, service, username):
-        """Read the password from the S3 bucket.
-        """
+        """Read the password from the S3 bucket."""
         service = _escape_for_s3(service)
         username = _escape_for_s3(username)
 
@@ -120,12 +129,11 @@ class S3Keyring(S3Backed, KeyringBackend):
         return pwd.decode('utf-8')
 
     def set_value(self, *args, **kwargs):
-        """An alias for method set_password"""
+        """An alias for method set_password."""
         return self.set_password(*args, **kwargs)
 
     def set_password(self, service, username, password):
-        """Write the password in the S3 bucket.
-        """
+        """Write the password in the S3 bucket."""
         service = _escape_for_s3(service)
         username = _escape_for_s3(username)
 
@@ -151,12 +159,11 @@ class S3Keyring(S3Backed, KeyringBackend):
         keyring.set_password(service, username, password)
 
     def delete_value(self, *args, **kwargs):
-        """An alias for delete_password"""
+        """An alias for delete_password."""
         return self.delete_password(*args, **kwargs)
 
     def delete_password(self, service, username):
-        """Delete the password for the username of the service.
-        """
+        """Delete the password for the username of the service."""
         service = _escape_for_s3(service)
         username = _escape_for_s3(username)
         prefix = self._get_s3_key(service, username)

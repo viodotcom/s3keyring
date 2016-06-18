@@ -88,8 +88,8 @@ Encryption key
 ~~~~~~~~~~~~~~
 
 You need to create a `KMS encryption key`_. Write down the ID of the
-KMS key that you create. You will need to communicate this KMS Key ID to all
-keyring users.
+KMS key that you create. You will need to communicate this KMS Key ID to the 
+users of the keyring.
 
 .. _KMS encryption key: http://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
 
@@ -107,18 +107,14 @@ For users: accessing the keyring
 One-time configuration
 ~~~~~~~~~~~~~~~~~~~~~~
 
-If you haven't done so already, you will need to configure your local 
-installation of the AWS SDK by running::
+If you haven't done so already, you will need to configure your local
+installation of the `AWS CLI`_ by running::
 
     aws configure
 
-You also need to ensure that you are using version 4 of the AWS Signature for
-authenticated requests to S3::
+.. _AWS CLI: http://docs.aws.amazon.com/cli
 
-    aws configure set s3.signature_version s3v4
-
-
-Then you can simply run::
+Then configure the S3 Keyring::
 
     s3keyring configure
 
@@ -126,13 +122,13 @@ Your keyring administrator will provide you with the ``KMS Key ID``,
 ``Bucket`` and ``Namespace`` configuration options. Option ``AWS profile``
 allows you to specify the local `AWS CLI profile`_ you want to use to sign all
 requests sent to AWS when accessing the keyring. Most users will want to use
-the ``default`` profile. 
+the ``default`` profile.
 
 .. _AWS CLI profile: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-multiple-profiles
 
 **IMPORTANT**: when deploying the `s3keyring` in EC2 instances that are granted
 access to the keyring by means of an `IAM role` you should not specify a
-custom AWS profile.
+custom AWS profile when configuring s3keyring in the instances.
 
 .. _IAM role: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
 
@@ -174,7 +170,6 @@ Then, to store and retrieve secrets in the administrators keyring::
 
 And you could do the same for the ``website-workers`` keyring using option
 ``--profile website-workers``.
-
 
 
 
@@ -241,7 +236,8 @@ In my project root directory I run::
     s3keyring configure --local
 
 I keep the generated ``.s3keyring.ini`` file as part of my project source code
-(i.e. under version control). Then::
+(i.e. under version control). Then in my project code I use the keyring like 
+this::
 
     from s3keyring.s3 import S3Keyring
 
@@ -267,4 +263,6 @@ This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/M
 See `License file <https://github.com/findhotel/s3keyring/blob/master/LICENSE.txt>`_
 
 
-© 2016 German Gomez-Herrero, and FindHotel.
+© 2016 German Gomez-Herrero, and `FindHotel`_.
+
+.. _FindHotel: http://company.findhotel.net/
