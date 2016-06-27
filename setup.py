@@ -256,10 +256,10 @@ setup_dict = dict(
     # Include the s3keyring.ini file in the package root dir
     package_data = {'': ['*.ini']},
     install_requires=[
-        'click>=5.1',
-        'keyring',
+        'click==5.1',
+        'keyring==9.1',
         'boto3>=1.2.3',
-        'awscli',
+        'awscli>=1.10.1',
         'configparser>=3.5.0b2'
     ] + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
