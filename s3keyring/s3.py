@@ -150,13 +150,9 @@ class S3Keyring(S3Backed, KeyringBackend):
                 # Can't connect to S3: fallback to OS keyring
                 print("WARNING: can't connect to S3, storing in OS keyring",
                       file=sys.stderr)
+                keyring.set_password(service, username, password)
             else:
                 raise
-
-        # We also save the password in the local OS keyring. This will allow us
-        # to retrieve the password locally if the S3 bucket would not be
-        # available.
-        keyring.set_password(service, username, password)
 
     def delete_value(self, *args, **kwargs):
         """An alias for delete_password."""

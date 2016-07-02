@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.0
+-----
+
+- Don't use the local keychain if the s3keyring config file says so
+
 0.1.0
 -----
 
