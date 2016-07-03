@@ -184,12 +184,13 @@ class S3Keyring(S3Backed, KeyringBackend):
                 raise
 
         # Delete also in the local keyring
-        try:
-            keyring.delete_password(service, username)
-        except PasswordDeleteError:
-            # It's OK: the password was not available in the local keyring
-            print("WARNING: {}/{} not found in OS keyring".format(
-                service, username))
+        if self.use_local_keyring:
+            try:
+                keyring.delete_password(service, username)
+            except PasswordDeleteError:
+                # It's OK: the password was not available in the local keyring
+                print("WARNING: {}/{} not found in OS keyring".format(
+                    service, username))
 
 
 def _escape_char(c):
