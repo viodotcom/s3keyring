@@ -32,6 +32,18 @@ Or you can choose to install the development version::
     pip install git+https://github.com/InnovativeTravel/s3-keyring
 
 
+__NOTE:__ In Mac OS X El Capitan and later you may run into permission issues
+when running `pip install`. A workaround is to install `s3keyring` using::
+
+    sudo -H pip install --ignore-installed git+https://github.com/InnovativeTravel/s3-keyring
+
+A better solution is to install Python with homebrew so that `pip install` will
+not attempt to install packages in any system directory::
+
+    brew install python
+
+
+
 
 For Admins: setting up the keyring
 ------------------------------------------------
