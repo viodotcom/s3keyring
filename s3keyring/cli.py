@@ -32,39 +32,39 @@ def configure(ctx, ask, local):
 
 
 @main.command()
-@click.argument("service")
+@click.argument("group")
 @click.argument("key")
 @click.pass_context
-def get(ctx, service, key):
+def get(ctx, group, key):
     """Get a secret."""
-    click.echo(ctx.obj["keyring"].get_password(service, key))
+    click.echo(ctx.obj["keyring"].get_password(group, key))
 
 
 @main.command()
-@click.argument("service")
+@click.argument("group")
 @click.argument("key")
 @click.argument("secret")
 @click.pass_context
-def set(ctx, service, key, secret):
+def set(ctx, group, key, secret):
     """Set a secret."""
-    click.echo(ctx.obj["keyring"].set_password(service, key, secret))
+    click.echo(ctx.obj["keyring"].set_password(group, key, secret))
 
 
 @main.command(name="list-keys")
-@click.argument("service")
+@click.argument("group")
 @click.pass_context
-def list_keys(ctx, service):
-    """List the keys associated to a given service."""
-    click.echo(ctx.obj["keyring"].list_keys(service))
+def list_keys(ctx, group):
+    """List the secret keys in a secrets group."""
+    click.echo(ctx.obj["keyring"].list_keys(group))
 
 
 @main.command()
-@click.argument("service")
+@click.argument("group")
 @click.argument("key")
 @click.pass_context
-def delete(ctx, service, key):
+def delete(ctx, group, key):
     """Delete a secret."""
-    click.echo(ctx.obj["keyring"].delete_password(service, key))
+    click.echo(ctx.obj["keyring"].delete_password(group, key))
 
 
 if __name__ == "__main__":

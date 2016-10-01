@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.2.2
+-----
+
+- Change naming conventions: secret namespaces, groups and keys
+
 0.2.0
 -----
 

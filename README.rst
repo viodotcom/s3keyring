@@ -90,8 +90,8 @@ roles that will have read and write access to the keyring::
 
 .. _IAM policy: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-policies-for-amazon-ec2.html
 
-You can easily create a policy that grants read-only access to the keyring by
-removing the ``s3:PutObject`` and ``s3:DeleteObject`` actions from the policy
+If you want to create a policy that grants read-only access to the keyring then
+remove the ``s3:PutObject`` and ``s3:DeleteObject`` actions from the policy
 above.
 
 
@@ -101,7 +101,7 @@ Encryption key
 ~~~~~~~~~~~~~~
 
 You need to create a `KMS encryption key`_. Write down the ID of the
-KMS key that you create. You will need to communicate this KMS Key ID to the 
+KMS key that you create. You will need to share this KMS Key ID with the
 users of the keyring.
 
 .. _KMS encryption key: http://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html
@@ -147,7 +147,7 @@ custom AWS profile when configuring s3keyring in the instances.
 
 
 You can configure the ``s3keyring`` module without user input by setting the
-following environment variables: ``KEYRING_BUCKET``, ``KEYRING_NAMESPACE``, 
+following environment variables: ``KEYRING_BUCKET``, ``KEYRING_NAMESPACE``,
 ``KEYRING_KMS_KEY_ID``, ``KEYRING_AWS_PROFILE``. If these environment variables
 are properly set then you can configure the ``s3keyring`` module with::
 
@@ -169,8 +169,8 @@ that admins-only keyring::
     s3keyring --profile administrators configure
 
 Your keyring admin may have also setup a separate S3 keyring to store secrets 
-that need to be accessed by EC2 instances that act as website workers in a 
-project you are working on. To access that keyring you would configure a 
+that need to be accessed by EC2 instances that act as backend workers in a
+project you are part of. To access that keyring you would configure a
 second ``s3keyring`` profile::
 
     s3keyring --profile website-workers configure
@@ -212,20 +212,20 @@ this::
 
     from s3keyring.s3 import S3Keyring
     kr = S3Keyring()
-    kr.set_password('service', 'username', '123456')
-    assert '123456' == kr.get_password('service', 'username')
-    kr.delete_password('service', 'username')
-    assert kr.get_password('service', 'username') is None
+    kr.set_password('groupname', 'username', '123456')
+    assert '123456' == kr.get_password('groupname', 'username')
+    kr.delete_password('groupname', 'username')
+    assert kr.get_password('groupname', 'username') is None
 
 
 You can also use the keyring from the command line::
 
     # Store a password
-    s3keyring set service username 123456
+    s3keyring set groupname username 123456
     # Retrieve it
-    s3keyring get service username
+    s3keyring get groupname username
     # Delete it
-    s3keyring delete service username
+    s3keyring delete groupname username
 
 
 .. _keyring module: https://pypi.python.org/pypi/keyring
@@ -257,7 +257,6 @@ this::
     keyring = S3Keyring(config_file="/path/to/s3keyring.ini")
     keyring.set_password('service', 'username', '123456')
     assert keyring.get_password('service', 'username') == '123456'
-
 
 
 Contact
