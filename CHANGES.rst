@@ -4,6 +4,11 @@ Changelog
 0.2.2
 -----
 
+- Fix pycparser version to prevent bug in pycparser 2.15
+
+0.2.2
+-----
+
 - Change naming conventions: secret namespaces, groups and keys
 
 0.2.0

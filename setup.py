@@ -28,6 +28,8 @@ setup(
     long_description=long_description,
     install_requires=[
         "click>=5.1",
+        # pycparser 2.15 is broken
+        "pycparser==2.14",
         "keyring",
         "boto3facade>=0.2.8",
         "awscli",
