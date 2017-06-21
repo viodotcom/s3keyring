@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 import base64
+import logging
 
 from keyring.errors import (PasswordDeleteError)
 from keyring.backend import KeyringBackend
@@ -23,6 +24,9 @@ LEGAL_CHARS = (
     ) + string.digits + '/_-'
 
 ESCAPE_FMT = "_{}02X"
+
+logger = logging.getLogger()
+logger.setLevel("INFO")
 
 
 class PasswordGetError(Exception):
@@ -69,7 +73,11 @@ class S3Backed(object):
     @property
     def namespace(self):
         """A namespace is simply a shared S3 prefix across a set of keys."""
-        return _escape_for_s3(config.profile["namespace"])
+        try:
+            return _escape_for_s3(config.profile["namespace"])
+        except KeyError:
+            logger.error("No keyring namespace was found: did you run "
+                         "`s3keyring configure`?")
 
 
 class S3Keyring(S3Backed, KeyringBackend):
