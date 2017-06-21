@@ -147,8 +147,8 @@ custom AWS profile when configuring s3keyring in the instances.
 
 
 You can configure the ``s3keyring`` module without user input by setting the
-following environment variables: ``KEYRING_BUCKET``, ``KEYRING_NAMESPACE``,
-``KEYRING_KMS_KEY_ID``, ``KEYRING_AWS_PROFILE``. If these environment variables
+following environment variables: ``S3KEYRING_BUCKET``, ``S3KEYRING_NAMESPACE``,
+``S3KEYRING_KMS_KEY_ID``, ``S3KEYRING_AWS_PROFILE``. If these environment variables
 are properly set then you can configure the ``s3keyring`` module with::
 
     s3keyring configure --no-ask
