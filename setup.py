@@ -258,9 +258,9 @@ setup_dict = dict(
     install_requires=[
         'click==5.1',
         'keyring==9.1',
-        'boto3==1.4.4',
-        'awscli==1.11.38',
-        'botocore==1.5.1',
+        'boto3>=1.4.4',
+        'awscli>=1.11.38',
+        'botocore>=1.5.1',
         'configparser==3.5.0b2'
     ] + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
