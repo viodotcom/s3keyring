@@ -69,5 +69,19 @@ def delete(ctx, service, username):
     click.echo(ctx.obj['keyring'].delete_password(service, username))
 
 
+@main.command()
+@click.pass_context
+def build_cache(ctx):
+    """Builds cache for a namespace"""
+    click.echo(ctx.obj['keyring'].build_cache())
+
+
+@main.command()
+@click.pass_context
+def get_cache(ctx):
+    """Returns cache for a namespace"""
+    click.echo(ctx.obj['keyring'].get_cache())
+
+
 if __name__ == '__main__':
     main()
