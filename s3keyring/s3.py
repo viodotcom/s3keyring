@@ -29,6 +29,8 @@ LEGAL_CHARS = (
 
 ESCAPE_FMT = "_{}02X"
 
+CACHE_KEY = '{}/s3-keyring-cache.json'
+
 
 class PasswordGetError(Exception):
     """Raised when there is an error retrieving a password.
@@ -323,14 +325,14 @@ class S3Keyring(S3Backed, KeyringBackend):
             cache[service] = {username: password}
 
         # write the cache file to S3
-        key = "{}/cache.json".format(self.namespace)
+        key = CACHE_KEY.format(self.namespace)
         json_contents = json.dumps(cache)
         self.bucket.Object(key).put(ACL='private', Body=json_contents,
                                     ServerSideEncryption='aws:kms',
                                     SSEKMSKeyId=self.kms_key_id)
 
     def get_cache(self):
-        key = "{}/cache.json".format(self.namespace)
+        key = CACHE_KEY.format(self.namespace)
 
         try:
             cache_obj = self.s3.Object(self.bucket.name, key)
