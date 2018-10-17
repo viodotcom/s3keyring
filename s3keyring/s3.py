@@ -10,6 +10,7 @@ import json
 import os
 import string
 import sys
+from collections import defaultdict
 
 import keyring
 import six
@@ -304,7 +305,7 @@ class S3Keyring(S3Backed, KeyringBackend):
 
     def build_cache(self):
         """Builds the cache file for the namespace"""
-        cache = {}
+        cache = defaultdict(dict)
 
         # Get all objects in the namespace
         objects = list(self.bucket.objects.filter(Prefix=self.namespace))
@@ -322,7 +323,7 @@ class S3Keyring(S3Backed, KeyringBackend):
             password = self.get_password(service, username)
 
             # Add to the cache
-            cache[service] = {username: password}
+            cache[service][username] = password
 
         # write the cache file to S3
         key = CACHE_KEY.format(self.namespace)
