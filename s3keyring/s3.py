@@ -3,21 +3,24 @@
 
 
 from __future__ import print_function
-import os
-import base64
-from s3keyring.config import Config
-from keyring.errors import (PasswordDeleteError)
-from keyring.backend import KeyringBackend
-from boto3.session import Session
-from botocore.exceptions import EndpointConnectionError
-from botocore.client import Config as BotoConfig
-from s3keyring.exceptions import ProfileNotFoundError
-import string
-import six
-import keyring
-import sys
-import configparser
 
+import base64
+import configparser
+import json
+import os
+import string
+import sys
+
+import keyring
+import six
+from boto3.session import Session
+from botocore.client import Config as BotoConfig
+from botocore.exceptions import EndpointConnectionError
+from keyring.backend import KeyringBackend
+from keyring.errors import (PasswordDeleteError)
+
+from s3keyring.config import Config
+from s3keyring.exceptions import ProfileNotFoundError
 
 LEGAL_CHARS = (
     getattr(string, 'letters', None)     # Python 2.x
@@ -25,6 +28,8 @@ LEGAL_CHARS = (
     ) + string.digits + '/_-'
 
 ESCAPE_FMT = "_{}02X"
+
+CACHE_KEY = '{}/s3-keyring-cache.json'
 
 
 class PasswordGetError(Exception):
@@ -296,6 +301,49 @@ class S3Keyring(S3Backed, KeyringBackend):
             # It's OK: the password was not available in the local keyring
             print("WARNING: {}/{} not found in OS keyring".format(
                 service, username))
+
+    def build_cache(self):
+        """Builds the cache file for the namespace"""
+        cache = {}
+
+        # Get all objects in the namespace
+        objects = list(self.bucket.objects.filter(Prefix=self.namespace))
+
+        for obj in objects:
+            if not obj.key.endswith('secret.b64'):
+                # Do not cache any files that aren't secrets
+                continue
+            # Get the service and username
+            key_data = obj.key.split('/')
+            service = key_data[1]
+            username = key_data[2]
+
+            # Fetch the secret
+            password = self.get_password(service, username)
+
+            # Add to the cache
+            cache[service] = {username: password}
+
+        # write the cache file to S3
+        key = CACHE_KEY.format(self.namespace)
+        json_contents = json.dumps(cache)
+        self.bucket.Object(key).put(ACL='private', Body=json_contents,
+                                    ServerSideEncryption='aws:kms',
+                                    SSEKMSKeyId=self.kms_key_id)
+
+    def get_cache(self):
+        key = CACHE_KEY.format(self.namespace)
+
+        try:
+            cache_obj = self.s3.Object(self.bucket.name, key)
+        except Exception:
+            # No cache file, just return an empty dict and let the user handle
+            # cache misses as they see appropriate for their use case
+            return {}
+
+        cache_json = cache_obj.get()['Body'].read().decode('utf-8')
+
+        return json.loads(cache_json)
 
 
 def _escape_char(c):
