@@ -263,7 +263,8 @@ class S3Keyring(S3Backed, KeyringBackend):
         # We also save the password in the local OS keyring. This will allow us
         # to retrieve the password locally if the S3 bucket would not be
         # available.
-        keyring.set_password(service, username, password)
+        if self.use_local_keyring:
+            keyring.set_password(service, username, password)
 
     def delete_value(self, *args, **kwargs):
         """An alias for delete_password"""
