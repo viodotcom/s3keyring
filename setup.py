@@ -261,7 +261,7 @@ setup_dict = dict(
         'boto3>=1.4.4',
         'awscli>=1.11.38',
         'botocore>=1.5.1',
-        'configparser==3.5.0b2'
+        'configparser>=3.5.0b2,<5'
     ] + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
     tests_require=[
