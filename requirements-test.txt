@@ -1,4 +1,5 @@
 # test requirements
+wrapt==1.11.2
 pytest
 pytest-cov
 pylama

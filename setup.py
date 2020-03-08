@@ -30,7 +30,7 @@ setup(
         "click>=5.1",
         # pycparser 2.15 is broken
         "pycparser==2.14",
-        "keyring",
+        "keyring==17.1.1",
         "boto3facade>=0.2.8",
         "awscli",
     ],
