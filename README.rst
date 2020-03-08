@@ -275,6 +275,6 @@ This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/M
 See `License file <https://github.com/findhotel/s3keyring/blob/master/LICENSE>`_
 
 
-© 2016 German Gomez-Herrero, and `FindHotel`_.
+© 2020 German Gomez-Herrero, and `FindHotel`_.
 
 .. _FindHotel: https://company.findhotel.net/
