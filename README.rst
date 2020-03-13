@@ -213,6 +213,17 @@ You can also use the keyring from the command line::
     s3keyring delete service username
 
 
+As of version 0.7.0 s3-keyring also includes a caching mechanism for a namespace.
+This works by saving a flat JSON file mapping keys to their passwords. This
+allows for applications to pull down a single cache file instead of many
+individual passwords to speed up launch times::
+
+  # Update cache
+  s3keyring build_cache
+  # Retrieve cache
+  s3keyring get_cache
+
+
 .. _keyring module: https://pypi.python.org/pypi/keyring
 
 
