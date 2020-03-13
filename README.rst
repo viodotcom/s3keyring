@@ -181,8 +181,7 @@ you can also tell s3keyring to use a custom configuration file. In the CLI::
     s3keyring --config /path/to/custom_config_file.ini get SERVICE ACCOUNT
 
 When using the module API::
-
-    from s3keyring.s3 import S3Keyring
+from s3keyring.s3 import S3Keyring
     kr = S3Keyring(config_file='/path/to/custom_config_file.ini')
     kr.get_password('service', 'username')
 
@@ -211,6 +210,17 @@ You can also use the keyring from the command line::
     s3keyring get service username
     # Delete it
     s3keyring delete service username
+
+
+As of version 0.7.0 s3-keyring also includes a caching mechanism for a namespace.
+This works by saving a flat JSON file mapping keys to their passwords. This
+allows for applications to pull down a single cache file instead of many
+individual passwords to speed up launch times::
+
+  # Update cache
+  s3keyring build_cache
+  # Retrieve cache
+  s3keyring get_cache
 
 
 .. _keyring module: https://pypi.python.org/pypi/keyring
