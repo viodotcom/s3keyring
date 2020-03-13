@@ -181,7 +181,8 @@ you can also tell s3keyring to use a custom configuration file. In the CLI::
     s3keyring --config /path/to/custom_config_file.ini get SERVICE ACCOUNT
 
 When using the module API::
-from s3keyring.s3 import S3Keyring
+
+    from s3keyring.s3 import S3Keyring
     kr = S3Keyring(config_file='/path/to/custom_config_file.ini')
     kr.get_password('service', 'username')
 
