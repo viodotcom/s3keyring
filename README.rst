@@ -2,9 +2,6 @@
 S3 backend for Python's keyring
 ================================
 
-.. image:: https://circleci.com/gh/InnovativeTravel/s3-keyring.svg?style=svg
-    :target: https://circleci.com/gh/InnovativeTravel/s3-keyring
-
 This module adds an `AWS S3`_ backend to Python's keyring_ module. The S3
 backend will store the keyring credentials in an S3 bucket and use client and
 server side encryption to keep the credentials safe both during transit and at
