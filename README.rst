@@ -17,10 +17,13 @@ finely tuned using AWS IAM policies.
 Installation
 ------------
 
-To install the development version::
+You can install a stable release from Pipy by FindHotel (previously InnovatingTravel)
+
+    pip install s3keyring
+
+To install the development version of this fork.
 
     pip install git+https://github.com/AdRoll/s3-keyring
-
 
 
 For Keyring Admins only: setting up the keyring
