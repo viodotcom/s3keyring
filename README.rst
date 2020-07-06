@@ -17,7 +17,7 @@ finely tuned using AWS IAM policies.
 Installation
 ------------
 
-You can install a stable release from Pipy by FindHotel (previously InnovatingTravel)
+You can install the [stable release from Pipy](https://pypi.org/project/s3keyring/) by FindHotel (previously InnovativeTravel)
 
     pip install s3keyring
 
