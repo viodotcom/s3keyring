@@ -17,14 +17,9 @@ finely tuned using AWS IAM policies.
 Installation
 ------------
 
-You can install a stable release from Pipy::
+To install the development version::
 
-    pip install s3keyring
-
-
-Or you can choose to install the development version::
-
-    pip install git+https://github.com/InnovativeTravel/s3-keyring
+    pip install git+https://github.com/AdRoll/s3-keyring
 
 
 
