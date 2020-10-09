@@ -27,5 +27,7 @@ configparser==3.5.0b2
 # Cli
 Click==5.1
 
+setuptools==45
+
 # Improved debugger
 pdbpp
