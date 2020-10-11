@@ -27,7 +27,7 @@ setup(
     description="S3 backend for Python's keyring module",
     long_description=long_description,
     install_requires=[
-        "click==7.1.2",
+        "click==7.0",
         # pycparser 2.15 is broken
         "pycparser==2.14",
         "keyring==17.1.1",
