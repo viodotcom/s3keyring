@@ -1,3 +1,4 @@
 ipython
+twine
 
 -r requirements-test.txt
