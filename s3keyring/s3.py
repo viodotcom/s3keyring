@@ -17,6 +17,16 @@ import sys
 
 from s3keyring.settings import config
 
+# Python2/3 compatibility
+if sys.version_info.major == 2:
+    from base64 import decodestring as base64_decode
+    from base64 import encodestring as base64_encode
+elif sys.version_info.major == 3:
+    from base64 import decodebytes as base64_decode
+    from base64 import encodebytes as base64_encode
+else:
+    raise Exception("Invalid Python major version: {}".format(sys.version_info.major))
+
 
 LEGAL_CHARS = (
     getattr(string, 'letters', None)     # Python 2.x
@@ -133,7 +143,7 @@ class S3Keyring(S3Backed, KeyringBackend):
                 prefix=prefix, bucket=self.bucket.name)
             raise PasswordGetError(msg)
         pwd_base64 = values[0].get()['Body'].read()
-        pwd = base64.decodestring(pwd_base64)
+        pwd = base64_decode(pwd_base64)
         return pwd.decode('utf-8')
 
     def set_value(self, *args, **kwargs):
@@ -145,7 +155,7 @@ class S3Keyring(S3Backed, KeyringBackend):
         service = _escape_for_s3(service)
         username = _escape_for_s3(username)
 
-        pwd_base64 = base64.encodestring(password.encode('utf-8')).decode()
+        pwd_base64 = base64_encode(password.encode('utf-8')).decode()
 
         # Save in S3 using both server and client side encryption
         keyname = self._get_s3_key(service, username)
