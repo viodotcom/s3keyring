@@ -263,7 +263,7 @@ Contact
 -------
 
 If you have questions, bug reports, suggestions, etc. please create an issue on
-the `GitHub project page <http://github.com/findhotel/s3keyring>`_.
+the `GitHub project page <http://github.com/viodotcom/s3keyring>`_.
 
 
 
@@ -272,9 +272,9 @@ License
 
 This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_
 
-See `License file <https://github.com/findhotel/s3keyring/blob/master/LICENSE>`_
+See `License file <https://github.com/viodotcom/s3keyring/blob/master/LICENSE>`_
 
 
-© 2020 German Gomez-Herrero, and `FindHotel`_.
+© 2020 German Gomez-Herrero, and `Vio.com`_.
 
-.. _FindHotel: https://company.findhotel.net/
+.. _Vio.com: https://vio.com/
