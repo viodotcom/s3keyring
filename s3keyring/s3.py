@@ -160,9 +160,13 @@ class S3Keyring(S3Backed, KeyringBackend):
         # Save in S3 using both server and client side encryption
         keyname = self._get_s3_key(service, username)
         try:
-            self.bucket.Object(keyname).put(ACL='private', Body=pwd_base64,
-                                            ServerSideEncryption='aws:kms',
-                                            SSEKMSKeyId=self.kms_key_id)
+            self.bucket.Object(keyname).put(
+                ACL='private',
+                Body=pwd_base64,
+                ContentType='text/plain',
+                ServerSideEncryption='aws:kms',
+                SSEKMSKeyId=self.kms_key_id
+            )
         except EndpointConnectionError:
             if self.use_local_keyring:
                 # Can't connect to S3: fallback to OS keyring
